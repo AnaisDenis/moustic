@@ -4,6 +4,10 @@ import plotly.graph_objs as go
 from dash import Dash, dcc, html, Input, Output, State, callback_context
 import dash_bootstrap_components as dbc
 import random
+import numpy as np
+from dash import dash_table
+
+random.seed(42)
 
 # ---------- Chargement des données ----------
 CSV_PATH = "data/PostProc_Filtered_2020_09_03_18_15_53_Splined_reconstitue.csv"
@@ -46,6 +50,61 @@ color_list = [
 # Fonction qui choisit une couleur aléatoire parmi color_list
 def generate_random_color():
     return random.choice(color_list)
+
+def detect_couples(df, distance_threshold=0.055):
+    df_sorted = df.sort_values(by="time")
+    all_times = df_sorted["time"].unique()
+    active_collisions = {}
+    collision_records = []
+
+    for t in all_times:
+        df_t = df_sorted[df_sorted["time"] == t]
+        objs = df_t["object"].tolist()
+        positions = df_t[["XSplined", "YSplined", "ZSplined"]].values
+
+        for i in range(len(objs)):
+            for j in range(i + 1, len(objs)):
+                o1, o2 = sorted([objs[i], objs[j]])
+                pos1, pos2 = positions[i], positions[j]
+                dist = np.linalg.norm(pos1 - pos2)
+
+                key = (o1, o2)
+
+                if dist < distance_threshold:
+                    if key not in active_collisions:
+                        # Début d'une nouvelle collision
+                        active_collisions[key] = {"start": t, "end": t}
+                    else:
+                        # Mise à jour de la fin
+                        active_collisions[key]["end"] = t
+                else:
+                    if key in active_collisions:
+                        # Collision terminée
+                        record = {
+                            "couple_id": f"{o1}-{o2}",
+                            "object1": o1,
+                            "object2": o2,
+                            "start": active_collisions[key]["start"],
+                            "end": active_collisions[key]["end"],
+                            "duration": round(active_collisions[key]["end"] - active_collisions[key]["start"], 2)
+                        }
+                        collision_records.append(record)
+                        del active_collisions[key]
+
+    # Si collisions encore actives à la fin
+    for (o1, o2), tvals in active_collisions.items():
+        record = {
+            "couple_id": f"{o1}-{o2}",
+            "object1": o1,
+            "object2": o2,
+            "start": tvals["start"],
+            "end": tvals["end"],
+            "duration": round(tvals["end"] - tvals["start"], 2)
+        }
+        collision_records.append(record)
+
+    return pd.DataFrame(collision_records)
+
 
 
 # Attribuer une couleur aléatoire à chaque objet
@@ -91,11 +150,40 @@ app.layout = dbc.Container([
                     {"label": "X en fonction de Z", "value": "xz"},
                     {"label": "Y en fonction de Z", "value": "yz"},
                     {"label": "3D", "value": "3d"},
+                    {"label": "X, Y, Z en fonction du temps", "value": "xyzt"},
                 ],
                 value=["xy", "xz", "yz", "3d"],
                 inline=False
             ),
             html.Br(),
+
+            # Detection des couples
+            html.Label("Fonctionnalités avancées :"),
+            dbc.Checklist(
+            id="detect-couples-check",
+            options=[{"label": "Détecter les couples", "value": "detect"}],
+            value=[],
+            inline=True,
+            ),
+            html.Br(),
+
+            html.Div([
+                dbc.Button("Analyser les couples", id="analyze-couples", color="info", className="mb-3"),
+                dbc.Button("Télécharger CSV", id="download-button", color="secondary", className="mb-3"),
+                dcc.Download(id="download-csv"),
+                dcc.Loading(
+                    id="loading-output",
+                    type="circle",
+                    fullscreen=True,
+                    children=html.Div([
+                        html.Div(id="status-message",
+                                 style={"marginBottom": "10px", "fontWeight": "bold", "color": "blue"}),
+                        html.Div(id="couples-table-output")
+                    ])
+                )
+            ]),
+
+
 
             # Bouton Start/Stop
             dbc.Button("▶️ Start", id="start-stop-button", color="primary", className="me-2"),
@@ -108,6 +196,7 @@ app.layout = dbc.Container([
                 dbc.Button("Tout cocher", id="select-all", color="success", size="sm"),
                 dbc.Button("Tout décocher", id="deselect-all", color="danger", size="sm"),
             ], className="mb-2"),
+
 
             # Checklist des objets avec barre de défilement
             html.Div(
@@ -124,8 +213,10 @@ app.layout = dbc.Container([
         ], width=3, style={"backgroundColor": "#f8f9fa", "padding": "20px"}),
 
         dbc.Col([
-            html.Div(id="graphs-output")
+            html.Div(id="graphs-output"),
+            html.Div(id="couples-table-output", className="mt-4")  # ici on ajoute le tableau dans la colonne principale
         ], width=9)
+
     ])
 ], fluid=True)
 
@@ -220,10 +311,58 @@ def update_graphs(selected_time, selected_graphs, selected_objects):
     else:
         return html.Div("Aucun objet sélectionné pour l'affichage.")
 
-    if df_t.empty:
-        return html.Div("Aucune donnée pour ce temps.")
-
     plots = []
+
+    # Graphe X, Y, Z en fonction du temps
+    if "xyzt" in selected_graphs:
+        fig_time_series = go.Figure()
+
+        for obj in selected_objects:
+            df_obj = df[df['object'] == obj]
+            color = obj_colors[obj]
+
+            fig_time_series.add_trace(go.Scatter(
+                x=df_obj['time'], y=df_obj['XSplined'],
+                mode='lines',
+                name=f"{obj} - X",
+                line=dict(color=color, dash='solid')
+            ))
+
+            fig_time_series.add_trace(go.Scatter(
+                x=df_obj['time'], y=df_obj['YSplined'],
+                mode='lines',
+                name=f"{obj} - Y",
+                line=dict(color=color, dash='dot')
+            ))
+
+            fig_time_series.add_trace(go.Scatter(
+                x=df_obj['time'], y=df_obj['ZSplined'],
+                mode='lines',
+                name=f"{obj} - Z",
+                line=dict(color=color, dash='dash')
+            ))
+
+        fig_time_series.update_layout(
+            title="X, Y, Z en fonction du temps",
+            xaxis_title="Temps",
+            yaxis_title="Position",
+            legend_title="Objet - Coordonnée",
+            height=500,
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            xaxis=dict(gridcolor='lightgray'),
+            yaxis=dict(gridcolor='lightgray'),
+        )
+
+        plots.append(dcc.Graph(figure=fig_time_series))
+
+    # Si après ça, df_t est vide, on ne fait pas les autres graphes
+    if df_t.empty:
+        if plots:
+            return plots  # Afficher au moins le graphe temporel
+        else:
+            return html.Div("Aucune donnée pour ce temps.")
+
 
     if "xy" in selected_graphs:
         fig = px.scatter(df_t, x="YSplined", y="XSplined", color="object",
@@ -271,6 +410,9 @@ def update_graphs(selected_time, selected_graphs, selected_objects):
         )
         plots.append(dcc.Graph(figure=fig3d))
 
+
+
+
     # Organiser les graphiques par rangées de deux
     rows = []
     for i in range(0, len(plots), 2):
@@ -285,6 +427,65 @@ def update_graphs(selected_time, selected_graphs, selected_objects):
 
     return rows
 
+dbc.Col([
+    html.Div(id="graphs-output"),
+    html.Div(id="couples-table-output", className="mt-4")  # Ajout ici
+], width=9)
+
+@app.callback(
+    Output("couples-table-output", "children"),
+    Output("status-message", "children"),
+    Input("analyze-couples", "n_clicks"),
+    State("detect-couples-check", "value"),
+    prevent_initial_call=True
+)
+
+
+def display_couples(n_clicks, checkbox_value):
+    if "detect" not in checkbox_value:
+        return html.Div("La détection de couples n'est pas activée."), ""
+
+    # Message temporaire pendant le traitement
+    status = "⏳ Analyse en cours sur tout le fichier..."
+
+    # Lancer le traitement
+    couples_df = detect_couples(df)
+
+    # Résultat de l'analyse
+    if couples_df.empty:
+        return html.Div("Aucune collision détectée."), ""
+
+    # Tableau interactif
+    table = dash_table.DataTable(
+        id='couples-table',
+        columns=[{"name": col, "id": col} for col in couples_df.columns],
+        data=couples_df.to_dict("records"),
+        sort_action='native',
+        filter_action='none',
+        page_action='native',
+        page_size=10,
+        style_table={'overflowX': 'auto'},
+        style_cell={
+            'textAlign': 'left',
+            'minWidth': '100px',
+            'width': '150px',
+            'maxWidth': '200px',
+            'whiteSpace': 'normal'
+        }
+    )
+
+    return table, ""
+
+
+
+@app.callback(
+    Output("download-csv", "data"),
+    Input("download-button", "n_clicks"),
+    prevent_initial_call=True
+)
+def export_csv(n_clicks):
+    couples_df = detect_couples(df)
+    return dcc.send_data_frame(couples_df.to_csv, "couples_detectes.csv", index=False)
 
 # ---------- Run ----------
 if __name__ == '__main__':
