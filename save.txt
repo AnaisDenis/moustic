@@ -127,64 +127,61 @@ server = app.server
 # Ajoutez cette configuration pour gérer les callbacks en double
 app.config.suppress_callback_exceptions = True
 app.config.prevent_initial_callbacks = 'initial_duplicate'
-
 # ---------- Layout ----------
 app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
-            html.H3("Détection de couples", className="my-3 text-primary fw-bold"),
+            html.H3("Détection de couples", className="my-3"),
 
-            # Bloc : Fichier
-            html.H5("1️⃣ Charger un fichier CSV", className="mt-4 text-secondary"),
-            dcc.Upload(
-                id='upload-data',
-                children=html.Div(['📁 Glisser-déposer ou ', html.A('sélectionner un fichier')]),
-                style={
-                    'width': '100%',
-                    'height': '60px',
-                    'lineHeight': '60px',
-                    'borderWidth': '1px',
-                    'borderStyle': 'dashed',
-                    'borderRadius': '5px',
-                    'textAlign': 'center',
-                    'margin': '10px 0'
-                },
-                multiple=False
-            ),
-            html.Div(id='upload-status', style={'color': 'green'}),
+            # Section pour le téléchargement de fichier
+            html.Div([
+                html.Label("Charger un fichier CSV :"),
+                dcc.Upload(
+                    id='upload-data',
+                    children=html.Div([
+                        'Glisser-déposer ou ',
+                        html.A('Sélectionner un fichier')
+                    ]),
+                    style={
+                        'width': '100%',
+                        'height': '60px',
+                        'lineHeight': '60px',
+                        'borderWidth': '1px',
+                        'borderStyle': 'dashed',
+                        'borderRadius': '5px',
+                        'textAlign': 'center',
+                        'margin': '10px 0'
+                    },
+                    multiple=False
+                ),
+                html.Div(id='upload-status', style={'margin': '10px 0', 'color': 'green'}),
+                html.Div(id='file-info', style={'margin': '10px 0'})
+            ], style={'marginBottom': '20px'}),
 
-            # Bloc : Info sur le fichier avec prévention de débordement du texte
-            html.Div(
-                id='file-info',
-                title="",  # Info-bulle avec le nom complet
-                style={
-                    'margin': '10px 0',
-                    'whiteSpace': 'nowrap',
-                    'overflow': 'hidden',
-                    'textOverflow': 'ellipsis',
-                    'maxWidth': '100%',
-                    'color': 'gray',
-                    'fontSize': '0.85rem'
-                }
-            ),
-
-            # Bloc : Contrôle du temps
-            html.H5("2️⃣ Contrôle du temps", className="mt-4 text-secondary"),
-            html.Label("Temps sélectionné :"),
+            # Sélection du temps
+            html.Label("Sélection du temps :"),
             dcc.Slider(
                 id="time-slider",
-                min=0, max=10, step=0.02, value=0,
+                min=0,  # Valeur par défaut, sera mise à jour après chargement du fichier
+                max=10,  # Valeur par défaut, sera mise à jour après chargement du fichier
+                step=0.02,
+                value=0,  # Valeur par défaut, sera mise à jour après chargement du fichier
                 marks=None,
                 tooltip={"placement": "bottom", "always_visible": True},
-                disabled=True
+                disabled=True  # Désactivé par défaut jusqu'au chargement d'un fichier
             ),
-            dbc.Input(id="manual-time", type="number", step=0.02, value=0, debounce=True, disabled=True,
-                      className="mt-2"),
-            dbc.Button("▶️ Start", id="start-stop-button", color="primary", className="mt-3 w-100", disabled=True),
-            dcc.Interval(id="interval", interval=500, n_intervals=0, disabled=True),
+            html.Br(),
 
-            # Bloc : Affichage des graphes
-            html.H5("3️⃣ Options d'affichage", className="mt-4 text-secondary"),
+            dbc.Input(id="manual-time", type="number", step=0.02,
+                      value=0, debounce=True, disabled=True),  # Désactivé par défaut
+            html.Br(),
+
+            # Bouton Start/Stop
+            dbc.Button("▶️ Start", id="start-stop-button", color="primary", className="me-2", disabled=True),
+            dcc.Interval(id="interval", interval=500, n_intervals=0, disabled=True),
+            html.Br(), html.Br(),
+
+            # Sélection des types de graphiques
             html.Label("Graphiques à afficher :"),
             dbc.Checklist(
                 id="graph-selection",
@@ -195,62 +192,64 @@ app.layout = dbc.Container([
                     {"label": "3D", "value": "3d"},
                     {"label": "X, Y, Z en fonction du temps", "value": "xyzt"},
                 ],
-                value=["xy", "xz"],
-                inline=False,
-                className="mb-3"
+                value=["xy", "xz" ],
+                inline=False
             ),
-            html.Label("Options graphiques :"),
+            html.Br(),
+
+            html.Label("Options pour les graphiques :"),
             dbc.Checklist(
                 id="show-trajectory",
                 options=[{"label": "Afficher trajectoire continue", "value": "trajectory"}],
                 value=[],
                 inline=True,
             ),
+
             dbc.Checklist(
                 id="show-vectors",
                 options=[{"label": "Afficher vecteurs de direction", "value": "vectors"}],
                 value=[],
                 inline=True,
-                className="mb-3"
             ),
+            html.Br(),
 
-            # Bloc : Détection de couples
-            html.H5("4️⃣ Détection de couples", className="mt-4 text-secondary"),
+            # Detection des couples
+            html.Label("Fonctionnalités avancées :"),
             dbc.Checklist(
                 id="detect-couples-check",
                 options=[{"label": "Détecter les couples", "value": "detect"}],
                 value=[],
                 inline=True,
             ),
-            html.Label("Distance de seuil :"),
+
             dcc.Slider(
                 id="distance-threshold-slider",
-                min=0, max=0.1, step=0.001, value=0.055,
-                marks={i: str(i) for i in [0, 0.02, 0.04, 0.06, 0.08, 0.1]},
+                min=0,
+                max=0.1,
+                step=0.001,
+                value=0.055,  # Valeur par défaut
+                marks={0: '0', 0.02: '0.02', 0.04: '0.04', 0.06: '0.06', 0.08: '0.08', 0.1: '0.1'},
                 tooltip={"placement": "bottom", "always_visible": True}
             ),
-            dbc.Button("Analyser les couples", id="analyze-couples", color="primary", className="mt-3 w-100",
-                       disabled=True),
-            dbc.Button("Télécharger CSV", id="download-button", color="secondary", className="mt-2 w-100",
-                       disabled=True),
-            dcc.Download(id="download-csv"),
-            dcc.Loading(
-                id="loading-output",
-                type="circle",
-                fullscreen=True,
-                children=html.Div([
-                    html.Div(id="status-message", style={"fontWeight": "bold", "color": "blue"}),
-                    html.Div(id="couples-table-output")
-                ])
-            ),
+            html.Br(),
 
-            # Bloc : Objets à afficher
-            html.H5("5️⃣ Objets à afficher", className="mt-4 text-secondary"),
-            dbc.ButtonGroup([
-                dbc.Button("Tout cocher", id="select-all", color="success", size="sm", disabled=True),
-                dbc.Button("Tout décocher", id="deselect-all", color="danger", size="sm", disabled=True),
-            ], className="mb-2"),
-            html.Div(
+            html.Div([
+                dbc.Button("Analyser les couples", id="analyze-couples", color="primary", className="mb-3", disabled=True),
+                dbc.Button("Télécharger CSV", id="download-button", color="secondary", className="mb-3", disabled=True),
+                dcc.Download(id="download-csv"),
+                dcc.Loading(
+                    id="loading-output",
+                    type="circle",
+                    fullscreen=True,
+                    children=html.Div([
+                        html.Div(id="status-message",
+                                 style={"marginBottom": "10px", "fontWeight": "bold", "color": "blue"}),
+                        html.Div(id="couples-table-output")
+                    ])
+                )
+            ]),
+
+
                 dbc.Checklist(
                     id="object-checklist",
                     options=[],
@@ -258,10 +257,23 @@ app.layout = dbc.Container([
                     inline=False,
                     style={"maxHeight": "400px", "overflowY": "auto"}
                 ),
-                id="object-checklist-container"
-            )
 
-        ], width=3, style={"backgroundColor": "#f8f9fa", "padding": "20px", "borderRight": "1px solid #dee2e6"}),
+
+
+            # Sélection des objets
+            html.Label("Objets à afficher :"),
+            dbc.ButtonGroup([
+                dbc.Button("Tout cocher", id="select-all", color="success", size="sm", disabled=True),
+                dbc.Button("Tout décocher", id="deselect-all", color="danger", size="sm", disabled=True),
+            ], className="mb-2"),
+
+            # Checklist des objets avec barre de défilement
+            html.Div(
+                id="object-checklist-container",
+                style={"marginBottom": "20px"}
+            ),
+
+        ], width=3, style={"backgroundColor": "#f8f9fa", "padding": "20px"}),
 
         dbc.Col([
             html.Div(id="graphs-output"),
@@ -270,10 +282,13 @@ app.layout = dbc.Container([
     ])
 ], fluid=True)
 
-# Stores
+
+
+# Ajouter un store pour les données
 app.layout.children.append(dcc.Store(id='upload-data-storage'))
 app.layout.children.append(dcc.Store(id='object-colors-storage'))
 app.layout.children.append(dcc.Store(id='axis-ranges-storage'))
+
 
 
 # ---------- Callbacks ----------
