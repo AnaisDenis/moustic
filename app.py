@@ -19,6 +19,8 @@ def assign_colors_to_objects(objects):
     objects_str = [str(obj) for obj in objects]
     return {obj: color_palette[i % len(color_palette)] for i, obj in enumerate(sorted(objects_str))}
 
+
+
 def detect_couples(df, distance_threshold=0.055):
     """Détecte les couples d'objets qui sont proches l'un de l'autre"""
     df_sorted = df.sort_values(by="time")
@@ -183,6 +185,20 @@ app.layout = dbc.Container([
             dbc.Button("▶️ Start", id="start-stop-button", color="primary", className="mt-3 w-100", disabled=True),
             dcc.Interval(id="interval", interval=500, n_intervals=0, disabled=True),
 
+            html.Label("⏱️ Vitesse de lecture (ms entre frames) :"),
+            dcc.Slider(
+                id="interval-slider",
+                min=50,
+                max=1000,
+                step=50,
+                value=500,  # Valeur par défaut
+                marks={i: f"{i} ms" for i in range(100, 1001, 200)},
+                tooltip={"placement": "bottom", "always_visible": False},
+                className="mt-2 mb-3"
+            ),
+
+
+
             # Bloc : Affichage des graphes
             html.H5("3️⃣ Options d'affichage", className="mt-4 text-secondary"),
             html.Label("Graphiques à afficher :"),
@@ -209,6 +225,12 @@ app.layout = dbc.Container([
             dbc.Checklist(
                 id="show-vectors",
                 options=[{"label": "Afficher vecteurs de direction", "value": "vectors"}],
+                value=[],
+                inline=True,
+            ),
+            dbc.Checklist(
+                id="color-by-speed",
+                options=[{"label": "Colorer par vitesse", "value": "by_speed"}],
                 value=[],
                 inline=True,
                 className="mb-3"
@@ -240,7 +262,7 @@ app.layout = dbc.Container([
                 fullscreen=True,
                 children=html.Div([
                     html.Div(id="status-message", style={"fontWeight": "bold", "color": "blue"}),
-                    html.Div(id="couples-table-output")
+                    html.Div(id="couples-loading-output")
                 ])
             ),
 
@@ -432,18 +454,29 @@ def toggle_interval(n_clicks, disabled):
 
 
 @app.callback(
+    Output("interval", "interval"),
+    Input("interval-slider", "value")
+)
+def update_interval_speed(user_interval):
+    return user_interval
+
+
+
+@app.callback(
     Output("graphs-output", "children"),
     [Input("time-slider", "value"),
      Input("graph-selection", "value"),
      Input("object-checklist", "value"),
      Input("show-trajectory", "value"),
-     Input("show-vectors", "value")],  # Nouvel input
+     Input("show-vectors", "value"),
+     Input("color-by-speed", "value") ],
     [State("upload-data-storage", "data"),
      State("object-colors-storage", "data"),
      State("axis-ranges-storage", "data")],
     prevent_initial_call=True
 )
-def update_graphs(selected_time, selected_graphs, selected_objects, show_trajectory, show_vectors, df_json, obj_colors_data, axis_ranges_data):
+def update_graphs(selected_time, selected_graphs, selected_objects, show_trajectory, show_vectors, color_by_speed, df_json, obj_colors_data, axis_ranges_data):
+
     if df_json is None or not selected_objects:
         return html.Div("Veuillez charger un fichier CSV et sélectionner des objets.")
 
@@ -473,52 +506,7 @@ def update_graphs(selected_time, selected_graphs, selected_objects, show_traject
     if df_selected_objects.empty:
         return html.Div("Aucun des objets sélectionnés n'a été trouvé dans les données.")
 
-    # Graphe X, Y, Z en fonction du temps - utilise df_selected_objects (TOUS les temps)
-    if "xyzt" in selected_graphs:
-        fig_time_series = go.Figure()
 
-        for obj in selected_objects:
-            df_obj = df_selected_objects[df_selected_objects['object'] == obj]
-            if not df_obj.empty:  # Vérifier que l'objet existe dans les données
-                # Assurez-vous que la clé pour obj_colors est une chaîne
-                color = obj_colors.get(str(obj), "#000000")  # Valeur par défaut si la clé n'existe pas
-
-                fig_time_series.add_trace(go.Scatter(
-                    x=df_obj['time'], y=df_obj['XSplined'],
-                    mode='lines',
-                    name=f"{obj} - X",
-                    line=dict(color=color, dash='solid')
-                ))
-
-                fig_time_series.add_trace(go.Scatter(
-                    x=df_obj['time'], y=df_obj['YSplined'],
-                    mode='lines',
-                    name=f"{obj} - Y",
-                    line=dict(color=color, dash='dot')
-                ))
-
-                fig_time_series.add_trace(go.Scatter(
-                    x=df_obj['time'], y=df_obj['ZSplined'],
-                    mode='lines',
-                    name=f"{obj} - Z",
-                    line=dict(color=color, dash='dash')
-                ))
-
-
-
-        fig_time_series.update_layout(
-            title="X, Y, Z en fonction du temps",
-            xaxis_title="Temps",
-            yaxis_title="Position",
-            legend_title="Objet - Coordonnée",
-            height=500,
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            xaxis=dict(gridcolor='lightgray'),
-            yaxis=dict(gridcolor='lightgray'),
-        )
-
-        plots.append(dcc.Graph(figure=fig_time_series))
 
     # Filtrer le DataFrame complet pour les objets sélectionnés (pour les trajectoires)
     df_all_times = df[df['object'].isin(selected_objects)] if selected_objects else df
@@ -526,25 +514,54 @@ def update_graphs(selected_time, selected_graphs, selected_objects, show_traject
     # Maintenant, filtrer par temps pour les autres graphiques
     df_t = df[(df['time'] >= selected_time) & (df['time'] < selected_time + window)]
 
+    # Calculer la vitesse pour la coloration si nécessaire
+    df_t["speed"] = np.sqrt(df_t["VXSplined"] ** 2 + df_t["VYSplined"] ** 2 + df_t["VZSplined"] ** 2)
+
     if selected_objects:
         df_t = df_t[df_t['object'].isin(selected_objects)]
 
+    if "by_speed" in color_by_speed:
+        speed_min = 0
+        speed_max = 1.3
+
     if "xy" in selected_graphs:
-        # Créer la figure avec go.Figure() au lieu de px.scatter
+        # Créer la figure avec go.Figure()
         fig_xy = go.Figure()
 
-        # Ajouter manuellement chaque objet avec sa couleur associée
+
+        # Ajouter chaque objet
         for obj in selected_objects:
             df_obj = df_t[df_t['object'] == obj]
             if not df_obj.empty:
-                # Utiliser str(obj) pour s'assurer que la clé est une chaîne
-                color = obj_colors.get(str(obj), "#000000")
+                str_obj = str(obj)
+
+                if "by_speed" in color_by_speed:
+                    # Colorer par vitesse + colorbar à gauche
+                    marker = dict(
+                        size=8,
+                        color=df_obj["speed"],
+                        colorscale="Viridis",
+                        cmin=speed_min,
+                        cmax=speed_max,
+                        showscale=True,
+                        colorbar=dict(title="Vitesse")
+                    )
+                    showlegend = False
+                    name = None
+                else:
+                    # Couleur fixe par objet + légende visible
+                    color = obj_colors.get(str_obj, "#000000")
+                    marker = dict(size=8, color=color)
+                    showlegend = True
+                    name = str_obj
+
                 fig_xy.add_trace(go.Scatter(
                     x=df_obj["YSplined"],
                     y=df_obj["XSplined"],
                     mode="markers",
-                    marker=dict(size=8, color=color),
-                    name=str(obj)
+                    marker=marker,
+                    name=name,
+                    showlegend=showlegend
                 ))
 
                 # Ajouter la trajectoire si l'option est activée
@@ -612,13 +629,34 @@ def update_graphs(selected_time, selected_graphs, selected_objects, show_traject
             df_obj = df_t[df_t['object'] == obj]
             if not df_obj.empty:
                 color = obj_colors.get(str(obj), "#000000")
+                if "by_speed" in color_by_speed:
+                    marker = dict(
+                        size=8,
+                        color=df_obj["speed"],
+                        colorscale="Viridis",
+                        cmin=speed_min,
+                        cmax=speed_max,
+                        showscale=True,
+                        colorbar=dict(title="Vitesse")
+                    )
+                    showlegend = False
+                    name = None
+                else:
+                    color = obj_colors.get(str(obj), "#000000")
+                    marker = dict(size=8, color=color)
+                    showlegend = True
+                    name = str(obj)
+
                 fig_xz.add_trace(go.Scatter(
                     x=df_obj["ZSplined"],
                     y=df_obj["XSplined"],
                     mode="markers",
-                    marker=dict(size=8, color=color),
-                    name=str(obj)
+                    marker=marker,
+                    name=name,
+                    showlegend=showlegend
                 ))
+
+
 
                 if show_trajectory and "trajectory" in show_trajectory:
                     df_obj_all = df_all_times[df_all_times['object'] == obj]
@@ -685,12 +723,31 @@ def update_graphs(selected_time, selected_graphs, selected_objects, show_traject
             df_obj = df_t[df_t['object'] == obj]
             if not df_obj.empty:
                 color = obj_colors.get(str(obj), "#000000")
+                if "by_speed" in color_by_speed:
+                    marker = dict(
+                        size=8,
+                        color=df_obj["speed"],
+                        colorscale="Viridis",
+                        cmin=speed_min,
+                        cmax=speed_max,
+                        showscale=True,
+                        colorbar=dict(title="Vitesse")
+                    )
+                    showlegend = False
+                    name = None
+                else:
+                    color = obj_colors.get(str(obj), "#000000")
+                    marker = dict(size=8, color=color)
+                    showlegend = True
+                    name = str(obj)
+
                 fig_yz.add_trace(go.Scatter(
                     x=df_obj["ZSplined"],
                     y=df_obj["YSplined"],
                     mode="markers",
-                    marker=dict(size=8, color=color),
-                    name=str(obj)
+                    marker=marker,
+                    name=name,
+                    showlegend=showlegend
                 ))
 
                 if show_trajectory and "trajectory" in show_trajectory:
@@ -768,17 +825,32 @@ def update_graphs(selected_time, selected_graphs, selected_objects, show_traject
             df_obj = df_t[df_t['object'] == obj]
             color = obj_colors.get(str(obj), "#000000")
 
-            # Position actuelle
-            current_pos = df_obj[["XSplined", "YSplined", "ZSplined"]].values[0]
+            if "by_speed" in color_by_speed:
+                marker = dict(
+                    size=5,
+                    color=df_obj["speed"],
+                    colorscale="Viridis",
+                    cmin=speed_min,
+                    cmax=speed_max,
+                    showscale=True,
+                    colorbar=dict(title="Vitesse")
+                )
+                showlegend = False
+                name = None
+            else:
+                color = obj_colors.get(str(obj), "#000000")
+                marker = dict(size=5, color=color)
+                showlegend = True
+                name = str(obj)
 
-            # Ajouter le point actuel
             fig3d.add_trace(go.Scatter3d(
                 x=df_obj["XSplined"],
                 y=df_obj["YSplined"],
                 z=df_obj["ZSplined"],
                 mode="markers",
-                marker=dict(size=5, color=color),
-                name=str(obj)
+                marker=marker,
+                name=name,
+                showlegend=showlegend
             ))
 
             # Ajouter la trajectoire seulement si l'objet est présent à l'instant t
@@ -836,18 +908,74 @@ def update_graphs(selected_time, selected_graphs, selected_objects, show_traject
         fig3d.update_layout(
             title="Position 3D des objets",
             scene=dict(
-                xaxis_title="X",
-                yaxis_title="Y",
-                zaxis_title="Z",
-                xaxis=dict(range=[axis_ranges["x_min"], axis_ranges["x_max"]]),
-                yaxis=dict(range=[axis_ranges["y_min"], axis_ranges["y_max"]]),
-                zaxis=dict(range=[axis_ranges["z_min"], axis_ranges["z_max"]])
+                xaxis=dict(
+                    title="X",
+                    range=[axis_ranges["x_min"], axis_ranges["x_max"]],
+                    autorange=False,
+                ),
+                yaxis=dict(
+                    title="Y",
+                    range=[axis_ranges["y_min"], axis_ranges["y_max"]],
+                    autorange=False,
+                ),
+                zaxis=dict(
+                    title="Z",
+                    range=[axis_ranges["z_min"], axis_ranges["z_max"]],
+                    autorange=False,
+                ),
+                aspectmode='manual',
+                aspectratio=dict(x=1, y=1, z=1)
             ),
             height=600,
             margin=dict(l=0, r=0, b=0, t=40)
         )
 
         plots.append(dcc.Graph(figure=fig3d))
+
+        # Graphe X, Y, Z en fonction du temps - utilise df_selected_objects (TOUS les temps)
+        if "xyzt" in selected_graphs:
+            fig_time_series = go.Figure()
+
+            for obj in selected_objects:
+                df_obj = df_selected_objects[df_selected_objects['object'] == obj]
+                if not df_obj.empty:  # Vérifier que l'objet existe dans les données
+                    # Assurez-vous que la clé pour obj_colors est une chaîne
+                    color = obj_colors.get(str(obj), "#000000")  # Valeur par défaut si la clé n'existe pas
+
+                    fig_time_series.add_trace(go.Scatter(
+                        x=df_obj['time'], y=df_obj['XSplined'],
+                        mode='lines',
+                        name=f"{obj} - X",
+                        line=dict(color=color, dash='solid')
+                    ))
+
+                    fig_time_series.add_trace(go.Scatter(
+                        x=df_obj['time'], y=df_obj['YSplined'],
+                        mode='lines',
+                        name=f"{obj} - Y",
+                        line=dict(color=color, dash='dot')
+                    ))
+
+                    fig_time_series.add_trace(go.Scatter(
+                        x=df_obj['time'], y=df_obj['ZSplined'],
+                        mode='lines',
+                        name=f"{obj} - Z",
+                        line=dict(color=color, dash='dash')
+                    ))
+
+            fig_time_series.update_layout(
+                title="X, Y, Z en fonction du temps",
+                xaxis_title="Temps",
+                yaxis_title="Position",
+                legend_title="Objet - Coordonnée",
+                height=500,
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                xaxis=dict(gridcolor='lightgray'),
+                yaxis=dict(gridcolor='lightgray'),
+            )
+
+            plots.append(dcc.Graph(figure=fig_time_series))
 
     # Organiser les graphiques par rangées de deux
     rows = []
