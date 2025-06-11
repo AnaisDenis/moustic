@@ -267,6 +267,8 @@ def register_callbacks(app):
         if selected_objects:
             df_t = df_t[df_t['object'].isin(selected_objects)]
 
+        speed_min = None
+        speed_max = None
         if "by_speed" in color_by_speed:
             speed_min = 0
             speed_max = 1.3
@@ -296,329 +298,75 @@ def register_callbacks(app):
         else:
             objects_with_star_3d = []
 
-
         if "xy" in selected_graphs:
-            # Créer la figure avec go.Figure()
             fig_xy = go.Figure()
-
-            # Ajouter chaque objet
             for obj in selected_objects:
                 df_obj = df_t[df_t['object'] == obj]
-                if not df_obj.empty:
-                    str_obj = str(obj)
+                if df_obj.empty:
+                    continue
 
-                    if "neighbors" in color_by_neighbors:
-                        marker = dict(
-                            size=8,
-                            color=df_obj["neighbors_count"],
-                            colorscale="Plasma",
-                            cmin=0,
-                            cmax=max_neighbors,
-                            showscale=True,  # Toujours visible
-                            colorbar=dict(title="Voisins")  # Toujours visible
-                        )
-                        showlegend = False
-                        name = None
+                marker, showlegend, name = create_marker(df_obj, obj, obj_colors, color_by_neighbors, color_by_speed,
+                                                         max_neighbors, speed_min, speed_max)
+                add_scatter_trace(fig_xy, df_obj["YSplined"], df_obj["XSplined"], marker, name, showlegend)
 
-                    elif "by_speed" in color_by_speed:
-                        # Colorer par vitesse + colorbar à gauche
-                        marker = dict(
-                            size=8,
-                            color=df_obj["speed"],
-                            colorscale="Viridis",
-                            cmin=speed_min,
-                            cmax=speed_max,
-                            showscale=True,
-                            colorbar=dict(title="Vitesse")
-                        )
-                        showlegend = False
-                        name = None
-                    else:
-                        # Couleur fixe par objet + légende visible
-                        color = obj_colors.get(str_obj, "#000000")
-                        marker = dict(size=8, color=color)
-                        showlegend = True
-                        name = str_obj
+                if "trajectory" in show_trajectory:
+                    color = obj_colors.get(str(obj), "#000000")
+                    add_trajectory_trace(fig_xy, df_all_times, obj, "YSplined", "XSplined", color)
 
-                    fig_xy.add_trace(go.Scatter(
-                        x=df_obj["YSplined"],
-                        y=df_obj["XSplined"],
-                        mode="markers",
-                        marker=marker,
-                        name=name,
-                        showlegend=showlegend
-                    ))
+                if show_vectors and "vectors" in show_vectors:
+                    add_direction_vector(fig_xy, df, obj, selected_time, "YSplined", "XSplined")
 
-                    # Ajouter la trajectoire si l'option est activée
-                    if "trajectory" in show_trajectory:
-                        df_obj_all = df_all_times[df_all_times['object'] == obj]
-                        fig_xy.add_trace(go.Scatter(
-                            x=df_obj_all["YSplined"],
-                            y=df_obj_all["XSplined"],
-                            mode='lines',
-                            line=dict(color=color, width=1),
-                            name=f"{obj} (trajectoire)",
-                            opacity=0.5
-                        ))
-
-                    # Ajouter une ligne directionnelle en XY si les vecteurs sont activés
-                    if show_vectors and "vectors" in show_vectors:
-                        df_obj_all = df[df['object'] == obj].copy()
-                        df_obj_all["time_diff"] = abs(df_obj_all["time"] - selected_time)
-                        df_obj_current = df_obj_all.sort_values("time_diff").head(1)
-
-                        if not df_obj_current.empty:
-                            current_pos = df_obj_current[["YSplined", "XSplined"]].iloc[0].values  # Y en X ici
-
-                            df_obj_next = df_obj_all[df_obj_all["time"] > df_obj_current["time"].values[0]].sort_values(
-                                "time").head(1)
-                            if not df_obj_next.empty:
-                                next_pos = df_obj_next[["YSplined", "XSplined"]].iloc[0].values
-
-                                vector = next_pos - current_pos
-                                norm = np.linalg.norm(vector)
-
-                                if norm > 0.001:
-                                    unit_vector = vector / norm
-                                    scale = 0.1  # allongement du vecteur directionnel
-                                    extended_vector = unit_vector * scale
-                                    end_pos = current_pos + extended_vector
-
-                                    fig_xy.add_trace(go.Scatter(
-                                        x=[current_pos[0], end_pos[0]],  # Y
-                                        y=[current_pos[1], end_pos[1]],  # X
-                                        mode='lines',
-                                        line=dict(color='black', width=2),
-                                        showlegend=False,
-                                        name=f"Direction {obj}"
-                                    ))
-
-            # Mettre à jour la mise en page
-            fig_xy.update_layout(
-                title="X en fonction de Y",
-                xaxis_title="Y",
-                yaxis_title="X",
-                xaxis=dict(range=[axis_ranges['y_min'], axis_ranges['y_max']]),
-                yaxis=dict(range=[axis_ranges['x_min'], axis_ranges['x_max']]),
-                plot_bgcolor='white',
-                paper_bgcolor='white',
-                xaxis_gridcolor='lightgray',
-                yaxis_gridcolor='lightgray'
-            )
-
+            update_layout(fig_xy, "X en fonction de Y", "Y", "X",
+                          [axis_ranges['y_min'], axis_ranges['y_max']],
+                          [axis_ranges['x_min'], axis_ranges['x_max']])
             plots.append(dcc.Graph(figure=fig_xy))
 
         if "xz" in selected_graphs:
             fig_xz = go.Figure()
-
             for obj in selected_objects:
                 df_obj = df_t[df_t['object'] == obj]
-                if not df_obj.empty:
+                if df_obj.empty:
+                    continue
+
+                marker, showlegend, name = create_marker(df_obj, obj, obj_colors, color_by_neighbors, color_by_speed,
+                                                         max_neighbors, speed_min, speed_max)
+                add_scatter_trace(fig_xz, df_obj["ZSplined"], df_obj["XSplined"], marker, name, showlegend)
+
+                if "trajectory" in show_trajectory:
                     color = obj_colors.get(str(obj), "#000000")
-                    if "neighbors" in color_by_neighbors:
-                        marker = dict(
-                            size=8,
-                            color=df_obj["neighbors_count"],
-                            colorscale="Plasma",
-                            cmin=0,
-                            cmax=max_neighbors,
-                            showscale=True,  # Toujours visible
-                            colorbar=dict(title="Voisins")  # Toujours visible
-                        )
-                        showlegend = False
-                        name = None
+                    add_trajectory_trace(fig_xz, df_all_times, obj, "ZSplined", "XSplined", color)
 
-                    elif "by_speed" in color_by_speed:
-                        marker = dict(
-                            size=8,
-                            color=df_obj["speed"],
-                            colorscale="Viridis",
-                            cmin=speed_min,
-                            cmax=speed_max,
-                            showscale=True,
-                            colorbar=dict(title="Vitesse")
-                        )
-                        showlegend = False
-                        name = None
-                    else:
-                        color = obj_colors.get(str(obj), "#000000")
-                        marker = dict(size=8, color=color)
-                        showlegend = True
-                        name = str(obj)
+                if show_vectors and "vectors" in show_vectors:
+                    add_direction_vector(fig_xz, df, obj, selected_time, "ZSplined", "XSplined")
 
-                    fig_xz.add_trace(go.Scatter(
-                        x=df_obj["ZSplined"],
-                        y=df_obj["XSplined"],
-                        mode="markers",
-                        marker=marker,
-                        name=name,
-                        showlegend=showlegend
-                    ))
-
-
-
-                    if show_trajectory and "trajectory" in show_trajectory:
-                        df_obj_all = df_all_times[df_all_times['object'] == obj]
-                        fig_xz.add_trace(go.Scatter(
-                            x=df_obj_all["ZSplined"],
-                            y=df_obj_all["XSplined"],
-                            mode='lines',
-                            line=dict(color=color, width=1),
-                            name=f"{obj} (trajectoire)",
-                            opacity=0.5,
-                            showlegend=False
-                        ))
-
-                    # Ajouter une ligne directionnelle en XZ si les vecteurs sont activés
-                    if show_vectors and "vectors" in show_vectors:
-                        df_obj_all = df[df['object'] == obj].copy()
-                        df_obj_all["time_diff"] = abs(df_obj_all["time"] - selected_time)
-                        df_obj_current = df_obj_all.sort_values("time_diff").head(1)
-
-                        if not df_obj_current.empty:
-                            current_pos = df_obj_current[["ZSplined", "XSplined"]].iloc[0].values  # Z en X ici
-
-                            df_obj_next = df_obj_all[df_obj_all["time"] > df_obj_current["time"].values[0]].sort_values(
-                                "time").head(1)
-                            if not df_obj_next.empty:
-                                next_pos = df_obj_next[["ZSplined", "XSplined"]].iloc[0].values
-
-                                vector = next_pos - current_pos
-                                norm = np.linalg.norm(vector)
-
-                                if norm > 0.001:
-                                    unit_vector = vector / norm
-                                    scale = 0.1
-                                    extended_vector = unit_vector * scale
-                                    end_pos = current_pos + extended_vector
-
-                                    fig_xz.add_trace(go.Scatter(
-                                        x=[current_pos[0], end_pos[0]],  # Z
-                                        y=[current_pos[1], end_pos[1]],  # X
-                                        mode='lines',
-                                        line=dict(color='black', width=2),
-                                        showlegend=False,
-                                        name=f"Direction {obj}"
-                                    ))
-
-            fig_xz.update_layout(
-                title="X en fonction de Z",
-                xaxis_title="Z",
-                yaxis_title="X",
-                xaxis=dict(range=[axis_ranges['z_min'], axis_ranges['z_max']]),
-                yaxis=dict(range=[axis_ranges['x_min'], axis_ranges['x_max']]),
-                plot_bgcolor='white',
-                paper_bgcolor='white',
-                xaxis_gridcolor='lightgray',
-                yaxis_gridcolor='lightgray'
-            )
-
+            update_layout(fig_xz, "X en fonction de Z", "Z", "X",
+                          [axis_ranges['z_min'], axis_ranges['z_max']],
+                          [axis_ranges['x_min'], axis_ranges['x_max']])
             plots.append(dcc.Graph(figure=fig_xz))
 
         if "yz" in selected_graphs:
             fig_yz = go.Figure()
-
             for obj in selected_objects:
                 df_obj = df_t[df_t['object'] == obj]
-                if not df_obj.empty:
+                if df_obj.empty:
+                    continue
+
+                marker, showlegend, name = create_marker(df_obj, obj, obj_colors, color_by_neighbors, color_by_speed,
+                                                         max_neighbors, speed_min, speed_max)
+                add_scatter_trace(fig_yz, df_obj["ZSplined"], df_obj["YSplined"], marker, name, showlegend)
+
+                if "trajectory" in show_trajectory:
                     color = obj_colors.get(str(obj), "#000000")
-                    if "neighbors" in color_by_neighbors:
-                        marker = dict(
-                            size=8,
-                            color=df_obj["neighbors_count"],
-                            colorscale="Plasma",
-                            cmin=0,
-                            cmax=max_neighbors,
-                            showscale=True,  # Toujours visible
-                            colorbar=dict(title="Voisins")  # Toujours visible
-                        )
-                        showlegend = False
-                        name = None
+                    add_trajectory_trace(fig_yz, df_all_times, obj, "ZSplined", "YSplined", color)
 
-                    elif "by_speed" in color_by_speed:
-                        marker = dict(
-                            size=8,
-                            color=df_obj["speed"],
-                            colorscale="Viridis",
-                            cmin=speed_min,
-                            cmax=speed_max,
-                            showscale=True,
-                            colorbar=dict(title="Vitesse")
-                        )
-                        showlegend = False
-                        name = None
-                    else:
-                        color = obj_colors.get(str(obj), "#000000")
-                        marker = dict(size=8, color=color)
-                        showlegend = True
-                        name = str(obj)
+                if show_vectors and "vectors" in show_vectors:
+                    add_direction_vector(fig_yz, df, obj, selected_time, "ZSplined", "YSplined")
 
-                    fig_yz.add_trace(go.Scatter(
-                        x=df_obj["ZSplined"],
-                        y=df_obj["YSplined"],
-                        mode="markers",
-                        marker=marker,
-                        name=name,
-                        showlegend=showlegend
-                    ))
-
-                    if show_trajectory and "trajectory" in show_trajectory:
-                        df_obj_all = df_all_times[df_all_times['object'] == obj]
-                        fig_yz.add_trace(go.Scatter(
-                            x=df_obj_all["ZSplined"],
-                            y=df_obj_all["YSplined"],
-                            mode='lines',
-                            line=dict(color=color, width=1),
-                            name=f"{obj} (trajectoire)",
-                            opacity=0.5,
-                            showlegend=False
-                        ))
-
-                    # Ajouter une ligne directionnelle en YZ si les vecteurs sont activés
-                    if show_vectors and "vectors" in show_vectors:
-                        df_obj_all = df[df['object'] == obj].copy()
-                        df_obj_all["time_diff"] = abs(df_obj_all["time"] - selected_time)
-                        df_obj_current = df_obj_all.sort_values("time_diff").head(1)
-
-                        if not df_obj_current.empty:
-                            current_pos = df_obj_current[["ZSplined", "YSplined"]].iloc[0].values  # Z en Y ici
-
-                            df_obj_next = df_obj_all[df_obj_all["time"] > df_obj_current["time"].values[0]].sort_values(
-                                "time").head(1)
-                            if not df_obj_next.empty:
-                                next_pos = df_obj_next[["ZSplined", "YSplined"]].iloc[0].values
-
-                                vector = next_pos - current_pos
-                                norm = np.linalg.norm(vector)
-
-                                if norm > 0.001:
-                                    unit_vector = vector / norm
-                                    scale = 0.1
-                                    extended_vector = unit_vector * scale
-                                    end_pos = current_pos + extended_vector
-
-                                    fig_yz.add_trace(go.Scatter(
-                                        x=[current_pos[0], end_pos[0]],  # Z
-                                        y=[current_pos[1], end_pos[1]],  # Y
-                                        mode='lines',
-                                        line=dict(color='black', width=2),
-                                        showlegend=False,
-                                        name=f"Direction {obj}"
-                                    ))
-
-            fig_yz.update_layout(
-                title="Y en fonction de Z",
-                xaxis_title="Z",
-                yaxis_title="Y",
-                xaxis=dict(range=[axis_ranges['z_min'], axis_ranges['z_max']]),
-                yaxis=dict(range=[axis_ranges['y_min'], axis_ranges['y_max']]),
-                plot_bgcolor='white',
-                paper_bgcolor='white',
-                xaxis_gridcolor='lightgray',
-                yaxis_gridcolor='lightgray'
-            )
-
+            update_layout(fig_yz, "Y en fonction de Z", "Z", "Y",
+                          [axis_ranges['z_min'], axis_ranges['z_max']],
+                          [axis_ranges['y_min'], axis_ranges['y_max']])
             plots.append(dcc.Graph(figure=fig_yz))
+
 
         # Partie à modifier dans la section où vous traitez les vecteurs dans le graphique 3D
         # Trouver la section suivante dans la fonction update_graphs:

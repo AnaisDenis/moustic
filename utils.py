@@ -3,6 +3,7 @@ import random
 import numpy as np
 import base64
 import io
+import plotly.graph_objs as go
 
 
 
@@ -336,7 +337,109 @@ def detect_rupture_fusion(inter_df, union_df, rupture_df):
 
 ################# FONCTION GRAPHIQUES #####################################################
 
+########### ------- Fonctions x,y,z ----- ############
 
+def create_marker(df_obj, obj, obj_colors, color_by_neighbors, color_by_speed, max_neighbors,
+                  speed_min=None, speed_max=None):
+    str_obj = str(obj)
+    if "neighbors" in color_by_neighbors:
+        marker = dict(
+            size=8,
+            color=df_obj["neighbors_count"],
+            colorscale="Plasma",
+            cmin=0,
+            cmax=max_neighbors,
+            showscale=True,
+            colorbar=dict(title="Voisins")
+        )
+        showlegend = False
+        name = None
+    elif "by_speed" in color_by_speed and speed_min is not None and speed_max is not None:
+        marker = dict(
+            size=8,
+            color=df_obj["speed"],
+            colorscale="Viridis",
+            cmin=speed_min,
+            cmax=speed_max,
+            showscale=True,
+            colorbar=dict(title="Vitesse")
+        )
+        showlegend = False
+        name = None
+    else:
+        color = obj_colors.get(str_obj, "#000000")
+        marker = dict(size=8, color=color)
+        showlegend = True
+        name = str_obj
+    return marker, showlegend, name
+
+def add_scatter_trace(fig, x_data, y_data, marker, name, showlegend):
+    fig.add_trace(go.Scatter(
+        x=x_data,
+        y=y_data,
+        mode="markers",
+        marker=marker,
+        name=name,
+        showlegend=showlegend
+    ))
+
+def add_trajectory_trace(fig, df_all_times, obj, x_col, y_col, color):
+    df_obj_all = df_all_times[df_all_times['object'] == obj]
+    fig.add_trace(go.Scatter(
+        x=df_obj_all[x_col],
+        y=df_obj_all[y_col],
+        mode='lines',
+        line=dict(color=color, width=1),
+        name=f"{obj} (trajectoire)",
+        opacity=0.5,
+        showlegend=False
+    ))
+
+def add_direction_vector(fig, df, obj, selected_time, x_col, y_col):
+    df_obj_all = df[df['object'] == obj].copy()
+    df_obj_all["time_diff"] = abs(df_obj_all["time"] - selected_time)
+    df_obj_current = df_obj_all.sort_values("time_diff").head(1)
+
+    if not df_obj_current.empty:
+        current_pos = df_obj_current[[x_col, y_col]].iloc[0].values
+
+        df_obj_next = df_obj_all[df_obj_all["time"] > df_obj_current["time"].values[0]].sort_values("time").head(1)
+        if not df_obj_next.empty:
+            next_pos = df_obj_next[[x_col, y_col]].iloc[0].values
+
+            vector = next_pos - current_pos
+            norm = np.linalg.norm(vector)
+
+            if norm > 0.001:
+                unit_vector = vector / norm
+                scale = 0.1
+                extended_vector = unit_vector * scale
+                end_pos = current_pos + extended_vector
+
+                fig.add_trace(go.Scatter(
+                    x=[current_pos[0], end_pos[0]],
+                    y=[current_pos[1], end_pos[1]],
+                    mode='lines',
+                    line=dict(color='black', width=2),
+                    showlegend=False,
+                    name=f"Direction {obj}"
+                ))
+
+def update_layout(fig, title, x_title, y_title, x_range, y_range):
+    fig.update_layout(
+        title=title,
+        xaxis_title=x_title,
+        yaxis_title=y_title,
+        xaxis=dict(range=x_range),
+        yaxis=dict(range=y_range),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        xaxis_gridcolor='lightgray',
+        yaxis_gridcolor='lightgray'
+    )
+
+
+######## ------ Fonctions Options ------- ##########
 def get_objects_with_star_3d(df, selected_objects, selected_time, distance_threshold=0.1, min_vectors=2):
     """
     Identifie les objets qui sont pointés par au moins min_vectors autres objets à un instant donné.
