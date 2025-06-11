@@ -1418,36 +1418,59 @@ def update_graphs(selected_time, selected_graphs, selected_objects, show_traject
 
         plots.append(dcc.Graph(figure=fig3d))
 
-    # Graphe X, Y, Z en fonction du temps - utilise df_selected_objects (TOUS les temps)
     if "xyzt" in selected_graphs:
         fig_time_series = go.Figure()
+        gap_threshold = 0.05  # seuil pour considérer qu'il y a un "trou" dans la trajectoire
 
         for obj in selected_objects:
             df_obj = df_selected_objects[df_selected_objects['object'] == obj]
-            if not df_obj.empty:  # Vérifier que l'objet existe dans les données
-                # Assurez-vous que la clé pour obj_colors est une chaîne
-                color = obj_colors.get(str(obj), "#000000")  # Valeur par défaut si la clé n'existe pas
+            if not df_obj.empty:
+                color = obj_colors.get(str(obj), "#000000")
+                df_obj = df_obj.sort_values(by='time')
 
-                fig_time_series.add_trace(go.Scatter(
-                    x=df_obj['time'], y=df_obj['XSplined'],
-                    mode='lines',
-                    name=f"{obj} - X",
-                    line=dict(color=color, dash='solid')
-                ))
+                # Découpage en segments sans gros trous temporels
+                times = df_obj['time'].values
+                time_diffs = np.diff(times)
+                gap_indices = np.where(time_diffs > gap_threshold)[0]
 
-                fig_time_series.add_trace(go.Scatter(
-                    x=df_obj['time'], y=df_obj['YSplined'],
-                    mode='lines',
-                    name=f"{obj} - Y",
-                    line=dict(color=color, dash='dot')
-                ))
+                segments = []
+                start_idx = 0
+                for gap_idx in gap_indices:
+                    end_idx = gap_idx + 1
+                    segments.append(df_obj.iloc[start_idx:end_idx])
+                    start_idx = end_idx
+                segments.append(df_obj.iloc[start_idx:])  # dernier segment
 
-                fig_time_series.add_trace(go.Scatter(
-                    x=df_obj['time'], y=df_obj['ZSplined'],
-                    mode='lines',
-                    name=f"{obj} - Z",
-                    line=dict(color=color, dash='dash')
-                ))
+                for segment in segments:
+                    if len(segment) < 2:
+                        continue
+
+                    fig_time_series.add_trace(go.Scatter(
+                        x=segment['time'], y=segment['XSplined'],
+                        mode='lines',
+                        name=f"{obj} - X",
+                        line=dict(color=color, dash='solid'),
+                        legendgroup=str(obj),
+                        showlegend=True  # Affiche la légende une seule fois par groupe
+                    ))
+
+                    fig_time_series.add_trace(go.Scatter(
+                        x=segment['time'], y=segment['YSplined'],
+                        mode='lines',
+                        name=f"{obj} - Y",
+                        line=dict(color=color, dash='dot'),
+                        legendgroup=str(obj),
+                        showlegend=False
+                    ))
+
+                    fig_time_series.add_trace(go.Scatter(
+                        x=segment['time'], y=segment['ZSplined'],
+                        mode='lines',
+                        name=f"{obj} - Z",
+                        line=dict(color=color, dash='dash'),
+                        legendgroup=str(obj),
+                        showlegend=False
+                    ))
 
         fig_time_series.update_layout(
             title="X, Y, Z en fonction du temps",
