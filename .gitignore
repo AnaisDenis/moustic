@@ -3,11 +3,8 @@ venv
 .env
 
 # Fichiers Python compilés  temporaires
-__pycache__
-.py[cod]
-.pyo
-.pyd
-.pkl
+__pycache__/
+
 
 # Dépendances 
 .egg-info
