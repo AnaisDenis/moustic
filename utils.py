@@ -337,6 +337,28 @@ def detect_rupture_fusion(inter_df, union_df, rupture_df):
 
 ################# FONCTION GRAPHIQUES #####################################################
 
+########## ------- Fonctions traitement des données ------ #########
+def load_inputs(df_json, obj_colors_data, axis_ranges_data):
+    try:
+        df = pd.read_json(df_json, orient='split')
+    except ValueError as e:
+        return None, {}, {}
+
+    obj_colors = obj_colors_data if isinstance(obj_colors_data, dict) else {}
+    axis_ranges = axis_ranges_data if isinstance(axis_ranges_data, dict) else {}
+
+    return df, obj_colors, axis_ranges
+
+def prepare_dataframes(df, selected_objects, selected_time, window=0.02):
+    df_selected_objects = df[df['object'].isin(selected_objects)] if selected_objects else df
+    df_all_times = df[df['object'].isin(selected_objects)] if selected_objects else df
+    df_t = df[(df['time'] >= selected_time) & (df['time'] < selected_time + window)]
+    if selected_objects:
+        df_t = df_t[df_t['object'].isin(selected_objects)]
+    return df_t.copy(), df_selected_objects.copy(), df_all_times.copy()
+
+
+
 ########### ------- Fonctions x,y,z ----- ############
 
 def create_marker(df_obj, obj, obj_colors, color_by_neighbors, color_by_speed, max_neighbors,
@@ -438,6 +460,141 @@ def update_layout(fig, title, x_title, y_title, x_range, y_range):
         yaxis_gridcolor='lightgray'
     )
 
+######### ----- Fonctions 3D ----- ##########
+
+def create_marker_3d(df_obj, obj, obj_colors, color_by_neighbors, color_by_speed, max_neighbors,
+                     speed_min, speed_max, is_star):
+    marker_size = 5
+    if "neighbors" in color_by_neighbors:
+        marker = dict(
+            size=marker_size,
+            color=df_obj["neighbors_count"],
+            colorscale="Plasma",
+            cmin=0,
+            cmax=max_neighbors,
+            showscale=True,
+            colorbar=dict(title="Voisins")
+        )
+        showlegend = False
+        name = None
+    elif "by_speed" in color_by_speed:
+        marker = dict(
+            size=marker_size,
+            color=df_obj["speed"],
+            colorscale="Viridis",
+            cmin=speed_min,
+            cmax=speed_max,
+            showscale=True,
+            colorbar=dict(title="Vitesse"),
+            symbol='diamond' if is_star else 'circle'
+        )
+        showlegend = False
+        name = None
+    else:
+        color = obj_colors.get(str(obj), "#000000")
+        marker = dict(
+            size=marker_size,
+            color=color,
+            symbol='diamond' if is_star else 'circle'
+        )
+        showlegend = True
+        name = str(obj)
+    return marker, showlegend, name
+
+
+def add_trajectory_3d(fig, df_all_times, obj, color):
+    df_obj_all = df_all_times[df_all_times['object'] == obj]
+    fig.add_trace(go.Scatter3d(
+        x=df_obj_all["XSplined"],
+        y=df_obj_all["YSplined"],
+        z=df_obj_all["ZSplined"],
+        mode='lines',
+        line=dict(color=color, width=2),
+        name=f"{obj} (trajectoire)",
+        opacity=0.5,
+        showlegend=False
+    ))
+
+
+def add_vector_3d(fig, df, obj, selected_time, pointing_sources):
+    df_obj_all = df[df['object'] == obj].copy()
+    df_obj_all["time_diff"] = abs(df_obj_all["time"] - selected_time)
+    df_obj_current = df_obj_all.sort_values("time_diff").head(1)
+
+    if not df_obj_current.empty:
+        current_pos = df_obj_current[["XSplined", "YSplined", "ZSplined"]].iloc[0].values
+        df_obj_next = df_obj_all[df_obj_all["time"] > df_obj_current["time"].values[0]].sort_values("time").head(1)
+
+        if not df_obj_next.empty:
+            next_pos = df_obj_next[["XSplined", "YSplined", "ZSplined"]].iloc[0].values
+            direction_vector = next_pos - current_pos
+            norm = np.linalg.norm(direction_vector)
+
+            if norm > 0.001:
+                unit_vector = direction_vector / norm
+                scale = 0.1
+                extended_vector = unit_vector * scale
+                end_pos = current_pos + extended_vector
+
+                vector_color = 'red' if obj in pointing_sources else 'black'
+                fig.add_trace(go.Scatter3d(
+                    x=[current_pos[0], end_pos[0]],
+                    y=[current_pos[1], end_pos[1]],
+                    z=[current_pos[2], end_pos[2]],
+                    mode='lines',
+                    line=dict(color=vector_color, width=6),
+                    name=f"Direction {obj}",
+                    showlegend=False
+                ))
+
+######### ----- Fonctions xyzt ----- ##########
+
+def split_trajectory_segments(df_obj, gap_threshold):
+    """Découpe une trajectoire en segments continus basés sur des gaps temporels."""
+    times = df_obj['time'].values
+    time_diffs = np.diff(times)
+    gap_indices = np.where(time_diffs > gap_threshold)[0]
+
+    segments = []
+    start_idx = 0
+    for gap_idx in gap_indices:
+        end_idx = gap_idx + 1
+        segments.append(df_obj.iloc[start_idx:end_idx])
+        start_idx = end_idx
+    segments.append(df_obj.iloc[start_idx:])  # Dernier segment
+    return segments
+
+
+def add_xyz_time_series(fig, segment, obj, color, show_legend):
+    """Ajoute les courbes X, Y, Z pour un segment temporel donné."""
+    fig.add_trace(go.Scatter(
+        x=segment['time'], y=segment['XSplined'],
+        mode='lines',
+        name=f"{obj} - X",
+        line=dict(color=color, dash='solid'),
+        legendgroup=str(obj),
+        showlegend=show_legend
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=segment['time'], y=segment['YSplined'],
+        mode='lines',
+        name=f"{obj} - Y",
+        line=dict(color=color, dash='dot'),
+        legendgroup=str(obj),
+        showlegend=False
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=segment['time'], y=segment['ZSplined'],
+        mode='lines',
+        name=f"{obj} - Z",
+        line=dict(color=color, dash='dash'),
+        legendgroup=str(obj),
+        showlegend=False
+    ))
+
+
 
 ######## ------ Fonctions Options ------- ##########
 def get_objects_with_star_3d(df, selected_objects, selected_time, distance_threshold=0.1, min_vectors=2):
@@ -525,4 +682,16 @@ def count_closest_neighbors_with_ties(df, tol=1e-6):
 
     return neighbor_counts
 
+def compute_speed_and_neighbors(df_t, color_by_neighbors):
+    df_t["speed"] = np.sqrt(df_t["VXSplined"] ** 2 + df_t["VYSplined"] ** 2 + df_t["VZSplined"] ** 2)
+    df_t["neighbors_count"] = 0
+
+    if "neighbors" in color_by_neighbors:
+        neighbor_counts = count_closest_neighbors_with_ties(df_t)
+        df_t["neighbors_count"] = df_t["object"].map(neighbor_counts)
+        max_neighbors = max(neighbor_counts.values()) if neighbor_counts else 1
+    else:
+        max_neighbors = 1
+
+    return df_t, max_neighbors
 

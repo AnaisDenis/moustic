@@ -210,93 +210,43 @@ def register_callbacks(app):
          State("axis-ranges-storage", "data")],
         prevent_initial_call=True
     )
-    def update_graphs(selected_time, selected_graphs, selected_objects, show_trajectory, show_vectors, color_by_speed,
-                      min_vectors, distance_threshold, color_by_neighbors,
+    def update_graphs(selected_time, selected_graphs, selected_objects, show_trajectory, show_vectors,
+                      color_by_speed, min_vectors, distance_threshold, color_by_neighbors,
                       df_json, obj_colors_data, axis_ranges_data):
 
-        if df_json is None or not selected_objects:
+        # Étape 1 : Charger les données et les paramètres
+        df, obj_colors, axis_ranges = load_inputs(df_json, obj_colors_data, axis_ranges_data)
+        if df is None or not selected_objects:
             return html.Div("Veuillez charger un fichier CSV et sélectionner des objets.")
 
-        # Convertir JSON en DataFrame
-        try:
-            df = pd.read_json(df_json, orient='split')
-        except ValueError as e:
-            return html.Div(f"Erreur lors de la conversion du fichier JSON en DataFrame : {e}")
-
-        # Récupérer les couleurs et les plages d'axes
-        if not isinstance(obj_colors_data, dict):
-            obj_colors = {}  # Gestion des erreurs
-        else:
-            obj_colors = obj_colors_data
-
-        if not isinstance(axis_ranges_data, dict):
-            axis_ranges = {}  # Gestion des erreurs
-        else:
-            axis_ranges = axis_ranges_data
-
-        window = 0.02
-        plots = []
-
-        # Filtrer le DataFrame par les objets sélectionnés (pour XYZT)
-        df_selected_objects = df[df['object'].isin(selected_objects)] if selected_objects else df
+        # Étape 2 : Préparer les DataFrames utiles
+        df_t, df_selected_objects, df_all_times = prepare_dataframes(df, selected_objects, selected_time)
 
         if df_selected_objects.empty:
             return html.Div("Aucun des objets sélectionnés n'a été trouvé dans les données.")
 
+        # Étape 3 : Ajouter colonnes de vitesse et de voisins
+        df_t, max_neighbors = compute_speed_and_neighbors(df_t, color_by_neighbors)
 
+        # Étape 4 : Calcul des bornes de vitesse
+        speed_min, speed_max = (0, 1.3) if "by_speed" in color_by_speed else (None, None)
 
-        # Filtrer le DataFrame complet pour les objets sélectionnés (pour les trajectoires)
-        df_all_times = df[df['object'].isin(selected_objects)] if selected_objects else df
-
-        # Maintenant, filtrer par temps pour les autres graphiques
-        df_t = df[(df['time'] >= selected_time) & (df['time'] < selected_time + window)]
-
-        # Calculer la vitesse pour la coloration si nécessaire
-        df_t["speed"] = np.sqrt(df_t["VXSplined"] ** 2 + df_t["VYSplined"] ** 2 + df_t["VZSplined"] ** 2)
-
-        df_t["neighbors_count"] = 0  # valeur par défaut
-
-        if "neighbors" in color_by_neighbors:
-            neighbor_counts = count_closest_neighbors_with_ties(df_t)
-            df_t["neighbors_count"] = df_t["object"].map(neighbor_counts)
-            max_neighbors = max(neighbor_counts.values()) if neighbor_counts else 1
-        else:
-            max_neighbors = 1
-
-
-        if selected_objects:
-            df_t = df_t[df_t['object'].isin(selected_objects)]
-
-        speed_min = None
-        speed_max = None
-        if "by_speed" in color_by_speed:
-            speed_min = 0
-            speed_max = 1.3
-
-        # Récupérer min_vectors et distance_threshold avec des valeurs par défaut
-        if min_vectors is None:
-            min_vectors = 2
-        else:
-            min_vectors = int(min_vectors)
-
-        if distance_threshold is None:
-            distance_threshold = 0.1
-        else:
-            distance_threshold = float(distance_threshold)
-
+        # Étape 5 : Traitement des vecteurs (si demandés)
         if show_vectors and "vectors" in show_vectors:
+            min_vectors = int(min_vectors) if min_vectors is not None else 2
+            distance_threshold = float(distance_threshold) if distance_threshold is not None else 0.1
+
             objects_with_star_3d, pointing_pairs = get_objects_with_star_3d(
-                df,
-                selected_objects,
-                selected_time,
+                df, selected_objects, selected_time,
                 distance_threshold=distance_threshold,
                 min_vectors=min_vectors
             )
-            # Construire un set des sources qui pointent vers des étoiles
             pointing_sources = {source for source, target in pointing_pairs if target in objects_with_star_3d}
-
         else:
             objects_with_star_3d = []
+            pointing_sources = set()
+
+        plots = []
 
         if "xy" in selected_graphs:
             fig_xy = go.Figure()
@@ -373,56 +323,18 @@ def register_callbacks(app):
 
         if "3d" in selected_graphs:
             fig3d = go.Figure()
-
-            # D'abord, obtenir la liste des objets présents à l'instant t
-            present_objects = df_t['object'].unique()
+            present_objects = set(df_t['object'].unique())
 
             for obj in selected_objects:
-                # Vérifier si l'objet est présent à l'instant t
                 if obj not in present_objects:
-                    continue  # Passer à l'objet suivant si non présent
+                    continue
 
                 df_obj = df_t[df_t['object'] == obj]
-                color = obj_colors.get(str(obj), "#000000")
-
                 is_star = obj in objects_with_star_3d
-                marker_size = 5 if is_star else 5
 
-                if "neighbors" in color_by_neighbors:
-                    marker = dict(
-                        size=5,
-                        color=df_obj["neighbors_count"],
-                        colorscale="Plasma",
-                        cmin=0,
-                        cmax=max_neighbors,
-                        showscale=True,  # Toujours visible
-                        colorbar=dict(title="Voisins")  # Toujours visible
-                    )
-                    showlegend = False
-                    name = None
-
-                elif "by_speed" in color_by_speed:
-                    marker = dict(
-                        size=marker_size,
-                        color=df_obj["speed"],
-                        colorscale="Viridis",
-                        cmin=speed_min,
-                        cmax=speed_max,
-                        showscale=True if obj == selected_objects[0] else False,
-                        colorbar=dict(title="Vitesse") if obj == selected_objects[0] else None,
-                        symbol='diamond' if is_star else 'circle'
-                    )
-                    showlegend = False
-                    name = None
-                else:
-                    color = obj_colors.get(str(obj), "#000000")
-                    marker = dict(
-                        size=marker_size,
-                        color=color,
-                        symbol='diamond' if is_star else 'circle'
-                    )
-                    showlegend = True
-                    name = str(obj)
+                marker, showlegend, name = create_marker_3d(df_obj, obj, obj_colors, color_by_neighbors,
+                                                            color_by_speed, max_neighbors,
+                                                            speed_min, speed_max, is_star)
 
                 fig3d.add_trace(go.Scatter3d(
                     x=df_obj["XSplined"],
@@ -434,77 +346,19 @@ def register_callbacks(app):
                     showlegend=showlegend
                 ))
 
-                # Ajouter la trajectoire seulement si l'objet est présent à l'instant t
                 if show_trajectory and "trajectory" in show_trajectory:
-                    df_obj_all = df_all_times[df_all_times['object'] == obj]
-                    fig3d.add_trace(go.Scatter3d(
-                        x=df_obj_all["XSplined"],
-                        y=df_obj_all["YSplined"],
-                        z=df_obj_all["ZSplined"],
-                        mode='lines',
-                        line=dict(color=color, width=2),
-                        name=f"{obj} (trajectoire)",
-                        opacity=0.5,
-                        showlegend=False
-                    ))
+                    color = obj_colors.get(str(obj), "#000000")
+                    add_trajectory_3d(fig3d, df_all_times, obj, color)
 
                 if show_vectors and "vectors" in show_vectors:
-                    df_obj_all = df[df['object'] == obj].copy()
-
-                    # Chercher le point le plus proche de selected_time
-                    df_obj_all["time_diff"] = abs(df_obj_all["time"] - selected_time)
-                    df_obj_current = df_obj_all.sort_values("time_diff").head(1)
-
-                    if not df_obj_current.empty:
-                        current_pos = df_obj_current[["XSplined", "YSplined", "ZSplined"]].iloc[0].values
-
-                        # Point suivant dans le temps (pour déterminer la direction)
-                        df_obj_next = df_obj_all[df_obj_all["time"] > df_obj_current["time"].values[0]].sort_values(
-                            "time").head(1)
-
-                        if not df_obj_next.empty:
-                            next_pos = df_obj_next[["XSplined", "YSplined", "ZSplined"]].iloc[0].values
-                            direction_vector = next_pos - current_pos
-                            norm = np.linalg.norm(direction_vector)
-
-                            if norm > 0.001:
-                                # Normaliser le vecteur de direction
-                                unit_vector = direction_vector / norm
-
-                                # Allonger le vecteur (longueur arbitraire, ex: 0.1)
-                                scale = 0.1
-                                extended_vector = unit_vector * scale
-                                end_pos = current_pos + extended_vector
-
-                                vector_color = 'red' if obj in pointing_sources else 'black'
-                                fig3d.add_trace(go.Scatter3d(
-                                    x=[current_pos[0], end_pos[0]],
-                                    y=[current_pos[1], end_pos[1]],
-                                    z=[current_pos[2], end_pos[2]],
-                                    mode='lines',
-                                    line=dict(color=vector_color, width=6),
-                                    name=f"Direction {obj}",
-                                    showlegend=False
-                                ))
+                    add_vector_3d(fig3d, df, obj, selected_time, pointing_sources)
 
             fig3d.update_layout(
                 title="Position 3D des objets",
                 scene=dict(
-                    xaxis=dict(
-                        title="X",
-                        range=[axis_ranges["x_min"], axis_ranges["x_max"]],
-                        autorange=False,
-                    ),
-                    yaxis=dict(
-                        title="Y",
-                        range=[axis_ranges["y_min"], axis_ranges["y_max"]],
-                        autorange=False,
-                    ),
-                    zaxis=dict(
-                        title="Z",
-                        range=[axis_ranges["z_min"], axis_ranges["z_max"]],
-                        autorange=False,
-                    ),
+                    xaxis=dict(title="X", range=[axis_ranges["x_min"], axis_ranges["x_max"]], autorange=False),
+                    yaxis=dict(title="Y", range=[axis_ranges["y_min"], axis_ranges["y_max"]], autorange=False),
+                    zaxis=dict(title="Z", range=[axis_ranges["z_min"], axis_ranges["z_max"]], autorange=False),
                     aspectmode='manual',
                     aspectratio=dict(x=1, y=1, z=1)
                 ),
@@ -516,57 +370,22 @@ def register_callbacks(app):
 
         if "xyzt" in selected_graphs:
             fig_time_series = go.Figure()
-            gap_threshold = 0.05  # seuil pour considérer qu'il y a un "trou" dans la trajectoire
+            gap_threshold = 0.05
 
             for obj in selected_objects:
                 df_obj = df_selected_objects[df_selected_objects['object'] == obj]
-                if not df_obj.empty:
-                    color = obj_colors.get(str(obj), "#000000")
-                    df_obj = df_obj.sort_values(by='time')
+                if df_obj.empty:
+                    continue
 
-                    # Découpage en segments sans gros trous temporels
-                    times = df_obj['time'].values
-                    time_diffs = np.diff(times)
-                    gap_indices = np.where(time_diffs > gap_threshold)[0]
+                color = obj_colors.get(str(obj), "#000000")
+                df_obj = df_obj.sort_values(by='time')
+                segments = split_trajectory_segments(df_obj, gap_threshold)
 
-                    segments = []
-                    start_idx = 0
-                    for gap_idx in gap_indices:
-                        end_idx = gap_idx + 1
-                        segments.append(df_obj.iloc[start_idx:end_idx])
-                        start_idx = end_idx
-                    segments.append(df_obj.iloc[start_idx:])  # dernier segment
-
-                    for segment in segments:
-                        if len(segment) < 2:
-                            continue
-
-                        fig_time_series.add_trace(go.Scatter(
-                            x=segment['time'], y=segment['XSplined'],
-                            mode='lines',
-                            name=f"{obj} - X",
-                            line=dict(color=color, dash='solid'),
-                            legendgroup=str(obj),
-                            showlegend=True  # Affiche la légende une seule fois par groupe
-                        ))
-
-                        fig_time_series.add_trace(go.Scatter(
-                            x=segment['time'], y=segment['YSplined'],
-                            mode='lines',
-                            name=f"{obj} - Y",
-                            line=dict(color=color, dash='dot'),
-                            legendgroup=str(obj),
-                            showlegend=False
-                        ))
-
-                        fig_time_series.add_trace(go.Scatter(
-                            x=segment['time'], y=segment['ZSplined'],
-                            mode='lines',
-                            name=f"{obj} - Z",
-                            line=dict(color=color, dash='dash'),
-                            legendgroup=str(obj),
-                            showlegend=False
-                        ))
+                for i, segment in enumerate(segments):
+                    if len(segment) < 2:
+                        continue
+                    show_legend = (i == 0)
+                    add_xyz_time_series(fig_time_series, segment, obj, color, show_legend)
 
             fig_time_series.update_layout(
                 title="X, Y, Z en fonction du temps",
