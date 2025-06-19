@@ -4,6 +4,7 @@ import numpy as np
 import base64
 import io
 import plotly.graph_objs as go
+import plotly.express as px
 
 
 
@@ -547,7 +548,7 @@ def add_vector_3d(fig, df, obj, selected_time, pointing_sources):
                     showlegend=False
                 ))
 
-######### ----- Fonctions xyzt ----- ##########
+######### ----- Fonctions xyzt, xt, yt, zt ----- ##########
 
 def split_trajectory_segments(df_obj, gap_threshold):
     """Découpe une trajectoire en segments continus basés sur des gaps temporels."""
@@ -565,34 +566,89 @@ def split_trajectory_segments(df_obj, gap_threshold):
     return segments
 
 
-def add_xyz_time_series(fig, segment, obj, color, show_legend):
-    """Ajoute les courbes X, Y, Z pour un segment temporel donné."""
-    fig.add_trace(go.Scatter(
-        x=segment['time'], y=segment['XSplined'],
-        mode='lines',
-        name=f"{obj} - X",
-        line=dict(color=color, dash='solid'),
-        legendgroup=str(obj),
-        showlegend=show_legend
-    ))
+def add_time_series_trace(fig, segment, obj, color, coords, show_legend=True):
+    """
+    Ajoute une ou plusieurs coordonnées (X, Y, Z) en fonction du temps à une figure.
+
+    Parameters:
+        - fig: objet go.Figure
+        - segment: DataFrame du segment
+        - obj: identifiant de l'objet
+        - color: couleur utilisée
+        - coords: str ou list de str parmi ['X', 'Y', 'Z']
+        - show_legend: booléen, pour afficher la légende sur la 1ère courbe
+    """
+    dash_styles = {'X': 'solid', 'Y': 'dot', 'Z': 'dash'}
+
+    # Permettre une string simple ou une liste
+    if isinstance(coords, str):
+        coords = [coords]
+
+    for i, coord in enumerate(coords):
+        fig.add_trace(go.Scatter(
+            x=segment['time'],
+            y=segment[f"{coord}Splined"],
+            mode='lines',
+            name=f"{obj} - {coord}",
+            line=dict(color=color, dash=dash_styles.get(coord, 'solid')),
+            legendgroup=str(obj),
+            showlegend=(show_legend if i == 0 else False)  # 1 seule légende par objet
+        ))
+
+
+def update_coord_figure_layout(fig, title, yaxis_title):
+    """Applique un layout standard à une figure existante."""
+    fig.update_layout(
+        title=title,
+        xaxis_title="Temps",
+        yaxis_title=yaxis_title,
+        legend_title="Objet - Coordonnée",
+        height=400,
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        xaxis=dict(gridcolor='lightgray'),
+        yaxis=dict(gridcolor='lightgray'),
+    )
+
+
+######### ----- Fonctions dt ----- ##########
+
+def euclidean_distance(df1, df2):
+    """
+    Calcule la distance euclidienne entre les points (X, Y, Z) de deux DataFrames alignés par le temps.
+    Les deux DataFrames doivent avoir les mêmes indices.
+
+    Retourne une Series des distances.
+    """
+    return np.sqrt(
+        (df1['XSplined'] - df2['XSplined']) ** 2 +
+        (df1['YSplined'] - df2['YSplined']) ** 2 +
+        (df1['ZSplined'] - df2['ZSplined']) ** 2
+    )
+
+def add_distance_trace(fig, df1, df2, obj1, obj2, color):
+    """
+    Ajoute une courbe de distance en fonction du temps entre deux objets.
+    """
+    common_times = pd.merge(df1[['time']], df2[['time']], on='time')
+    df1_aligned = pd.merge(common_times, df1, on='time')
+    df2_aligned = pd.merge(common_times, df2, on='time')
+
+    if df1_aligned.empty or df2_aligned.empty:
+        return
+
+    distances = euclidean_distance(df1_aligned, df2_aligned)
 
     fig.add_trace(go.Scatter(
-        x=segment['time'], y=segment['YSplined'],
+        x=common_times['time'],
+        y=distances,
         mode='lines',
-        name=f"{obj} - Y",
-        line=dict(color=color, dash='dot'),
-        legendgroup=str(obj),
-        showlegend=False
+        name=f"Distance {obj1} - {obj2}",
+        line=dict(color=color),
+        legendgroup=f"{obj1}_{obj2}",
+        showlegend=True
     ))
 
-    fig.add_trace(go.Scatter(
-        x=segment['time'], y=segment['ZSplined'],
-        mode='lines',
-        name=f"{obj} - Z",
-        line=dict(color=color, dash='dash'),
-        legendgroup=str(obj),
-        showlegend=False
-    ))
 
 
 

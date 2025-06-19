@@ -6,6 +6,7 @@ import random
 import numpy as np
 from dash import dash_table
 from dash import dcc
+import plotly.express as px
 
 from utils import *
 from layout import *
@@ -385,7 +386,8 @@ def register_callbacks(app):
                     if len(segment) < 2:
                         continue
                     show_legend = (i == 0)
-                    add_xyz_time_series(fig_time_series, segment, obj, color, show_legend)
+                    add_time_series_trace(fig_time_series, segment, obj, color, coords=['X', 'Y', 'Z'], show_legend=show_legend)
+
 
             fig_time_series.update_layout(
                 title="X, Y, Z en fonction du temps",
@@ -401,17 +403,105 @@ def register_callbacks(app):
 
             plots.append(dcc.Graph(figure=fig_time_series))
 
-        # Organiser les graphiques par rangées de deux
-        rows = []
-        for i in range(0, len(plots), 2):
-            row = dbc.Row(
-                [
-                    dbc.Col(plots[i], width=6),
-                    dbc.Col(plots[i + 1] if i + 1 < len(plots) else None, width=6)
-                ],
-                className="mb-4"
+        if any(coord in selected_graphs for coord in ["xt", "yt", "zt"]):
+            gap_threshold = 0.05
+            figs = {'X': None, 'Y': None, 'Z': None}
+            coord_map = {'X': 'xt', 'Y': 'yt', 'Z': 'zt'}
+
+            # Créer les figures nécessaires
+            for coord, key in coord_map.items():
+                if key in selected_graphs:
+                    figs[coord] = go.Figure()
+
+            for obj in selected_objects:
+                df_obj = df_selected_objects[df_selected_objects['object'] == obj]
+                if df_obj.empty:
+                    continue
+
+                color = obj_colors.get(str(obj), "#000000")
+                df_obj = df_obj.sort_values(by='time')
+                segments = split_trajectory_segments(df_obj, gap_threshold)
+
+                for i, segment in enumerate(segments):
+                    if len(segment) < 2:
+                        continue
+                    show_legend = (i == 0)
+
+                    for coord, fig in figs.items():
+                        if fig is not None:
+                            add_time_series_trace(fig, segment, obj, color, coords=coord, show_legend=show_legend)
+
+            for coord, fig in figs.items():
+                if fig is not None:
+                    update_coord_figure_layout(fig, f"{coord} en fonction du temps", coord)
+                    plots.append(dcc.Graph(figure=fig))
+
+        other_graphs = []
+        time_series_basic = []  # xt, yt, zt
+        dt_graph = None
+        xyzt_graph = None
+
+        for graph in plots:
+            title = graph.figure.layout.title.text.lower() if hasattr(graph.figure.layout, "title") else ""
+
+            if "x, y, z en fonction du temps" in title:
+                xyzt_graph = graph
+            elif any(coord in title for coord in
+                     ["x en fonction du temps", "y en fonction du temps", "z en fonction du temps"]):
+                time_series_basic.append(graph)
+            else:
+                other_graphs.append(graph)
+
+        # Générer dt si demandé et <= 5 objets
+        if "dt" in selected_graphs and len(selected_objects) <= 5:
+            fig_distance = go.Figure()
+            color_cycle = px.colors.qualitative.Plotly
+            from itertools import combinations
+            for idx, (obj1, obj2) in enumerate(combinations(selected_objects, 2)):
+                df1 = df_selected_objects[df_selected_objects['object'] == obj1].sort_values(by='time')
+                df2 = df_selected_objects[df_selected_objects['object'] == obj2].sort_values(by='time')
+                if df1.empty or df2.empty:
+                    continue
+                color = color_cycle[idx % len(color_cycle)]
+                add_distance_trace(fig_distance, df1, df2, obj1, obj2, color)
+
+            fig_distance.update_layout(
+                title="Distance entre paires d'objets en fonction du temps",
+                xaxis_title="Temps",
+                yaxis_title="Distance (euclidienne)",
+                legend_title="Paires d'objets",
+                height=500,
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                xaxis=dict(gridcolor='lightgray'),
+                yaxis=dict(gridcolor='lightgray'),
             )
-            rows.append(row)
+            dt_graph = dcc.Graph(figure=fig_distance)
+
+        # Construction finale des rangées
+
+        rows = []
+
+        # 1. autres graphes 2 par 2
+        for i in range(0, len(other_graphs), 2):
+            rows.append(
+                dbc.Row([
+                    dbc.Col(other_graphs[i], width=6),
+                    dbc.Col(other_graphs[i + 1] if i + 1 < len(other_graphs) else None, width=6)
+                ], className="mb-4")
+            )
+
+        # 2. xt, yt, zt un par ligne
+        for graph in time_series_basic:
+            rows.append(dbc.Row(dbc.Col(graph, width=12), className="mb-4"))
+
+        # 3. dt juste après xt, yt, zt
+        if dt_graph is not None:
+            rows.append(dbc.Row(dbc.Col(dt_graph, width=12), className="mb-4"))
+
+        # 4. xyzt à la fin
+        if xyzt_graph is not None:
+            rows.append(dbc.Row(dbc.Col(xyzt_graph, width=12), className="mb-4"))
 
         return rows
 
