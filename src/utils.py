@@ -245,7 +245,7 @@ def detect_rupture(df, distance_seuil=0.02):
     return pd.DataFrame(rupture_records)
 
 
-def detect_couples(inter_df, union_df, rupture_df):
+def detect_couples (inter_df, union_df, rupture_df):
     couples_records = []
 
     for _, fusion in union_df.iterrows():

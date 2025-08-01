@@ -74,10 +74,13 @@ layout = dbc.Container([
                 className="mt-2 mb-3"
             ),
 
-
+            #Bloc : enregistrer video
+            html.H5("3️⃣ Enregistrer la vidéo", className="mt-4 text-secondary"),
+            dbc.Button("🎥 Enregistrer la vidéo", id="save-video-btn", color="danger", className="mb-2 w-100"),
+            html.Div(id="video-status", style={"fontWeight": "bold", "color": "green"}),
 
             # Bloc : Affichage des graphes
-            html.H5("3️⃣ Options d'affichage", className="mt-4 text-secondary"),
+            html.H5("4️⃣  Options d'affichage", className="mt-4 text-secondary"),
             html.Label("Graphiques à afficher :"),
             dbc.Checklist(
                 id="graph-selection",
@@ -139,7 +142,7 @@ layout = dbc.Container([
             ),
 
             # Bloc : Détection de couples
-            html.H5("4️⃣ Détection de couples", className="mt-4 text-secondary"),
+            html.H5("5️⃣ Détection de couples", className="mt-4 text-secondary"),
 
             dbc.Checklist(
                 id="detect-couples-check",
@@ -214,7 +217,7 @@ layout = dbc.Container([
             dcc.Store(id='store-rupture-fusion'),
 
             # Bloc : Objets à afficher
-            html.H5("5️⃣ Objets à afficher", className="mt-4 text-secondary"),
+            html.H5("6️⃣ Objets à afficher", className="mt-4 text-secondary"),
             dbc.ButtonGroup([
                 dbc.Button("Tout cocher", id="select-all", color="success", size="sm", disabled=True),
                 dbc.Button("Tout décocher", id="deselect-all", color="danger", size="sm", disabled=True),
@@ -238,9 +241,12 @@ layout = dbc.Container([
         ], width=9)
     ]),
 
+
+
 # Stores
 dcc.Store(id='upload-data-storage'),
 dcc.Store(id='object-colors-storage'),
 dcc.Store(id='axis-ranges-storage'),
 ], fluid=True)
+
 

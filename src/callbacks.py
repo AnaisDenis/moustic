@@ -7,6 +7,10 @@ import numpy as np
 from dash import dash_table
 from dash import dcc
 import plotly.express as px
+import os
+import platform
+import subprocess
+from dash import Input, Output
 
 from utils import *
 from layout import *
@@ -17,27 +21,28 @@ from utils import parse_contents
 random.seed(42)
 
 def register_callbacks(app):
-
     @app.callback(
-        [Output('upload-data-storage', 'data', allow_duplicate=True),
-         Output('object-colors-storage', 'data'),
-         Output('axis-ranges-storage', 'data'),
-         Output('upload-status', 'children'),
-         Output('time-slider', 'min'),
-         Output('time-slider', 'max'),
-         Output('time-slider', 'value'),
-         Output('time-slider', 'disabled'),
-         Output('manual-time', 'disabled'),
-         Output('manual-time', 'value'),
-         Output('start-stop-button', 'disabled'),
-         Output('analyze-couples', 'disabled'),
-         Output('download-button', 'disabled'),
-         Output('select-all', 'disabled'),
-         Output('deselect-all', 'disabled'),
-         Output('object-checklist-container', 'children'),
-         Output('file-info', 'children')],
-        [Input('upload-data', 'contents')],
-        [State('upload-data', 'filename')],
+        [
+            Output('upload-data-storage', 'data', allow_duplicate=True),
+            Output('object-colors-storage', 'data'),
+            Output('axis-ranges-storage', 'data'),
+            Output('upload-status', 'children'),
+            Output('time-slider', 'min'),
+            Output('time-slider', 'max'),
+            Output('time-slider', 'value'),
+            Output('time-slider', 'disabled'),
+            Output('manual-time', 'disabled'),
+            Output('manual-time', 'value'),
+            Output('start-stop-button', 'disabled'),
+            Output('analyze-couples', 'disabled'),
+            Output('download-button', 'disabled'),
+            Output('select-all', 'disabled'),
+            Output('deselect-all', 'disabled'),
+            Output('object-checklist-container', 'children'),
+            Output('file-info', 'children')
+        ],
+        Input('upload-data', 'contents'),
+        State('upload-data', 'filename'),
         prevent_initial_call=True
     )
     def update_output(contents, filename):
@@ -95,6 +100,25 @@ def register_callbacks(app):
                 object_checklist,
                 file_info)
 
+    @app.callback(
+        Output("video-status", "children"),
+        Input("save-video-btn", "n_clicks"),
+        prevent_initial_call=True
+    )
+    def launch_video_script(n_clicks):
+        try:
+            script_path = os.path.abspath("generate_video.py")
+
+            if platform.system() == "Windows":
+                subprocess.Popen(f'start "" cmd /c python "{script_path}"', shell=True)
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.Popen(["open", "-a", "Terminal", "python3", script_path])
+            else:  # Linux (assume terminal emulator is installed)
+                subprocess.Popen(["x-terminal-emulator", "-e", f"python3 {script_path}"])
+
+            return "✅ Fenêtre de génération vidéo ouverte."
+        except Exception as e:
+            return f"❌ Erreur lors de l'ouverture : {str(e)}"
 
     @app.callback(
         [Output("time-slider", "value", allow_duplicate=True),
