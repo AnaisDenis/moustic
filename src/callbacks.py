@@ -15,6 +15,7 @@ from .utils import *
 from .utils import parse_contents
 from .layout import *
 from .generate_video import VideoRecorderApp, render_frame, ajuster_temps
+from dash import Input, Output, State, callback
 
 
 random.seed(42)
@@ -179,6 +180,32 @@ def register_callbacks(app):
 
         return dash.no_update
 
+    @callback(
+        Output("mosquitrack-collapse", "is_open"),
+        Input("mosquitrack-title", "n_clicks"),
+        State("mosquitrack-collapse", "is_open"),
+        prevent_initial_call=True
+    )
+    def toggle_mosquitrack(n, is_open):
+        return not is_open
+
+    @callback(
+        Output("mosquinvestigate-collapse", "is_open"),
+        Input("mosquinvestigate-title", "n_clicks"),
+        State("mosquinvestigate-collapse", "is_open"),
+        prevent_initial_call=True
+    )
+    def toggle_mosquinvestigate(n, is_open):
+        return not is_open
+
+    @callback(
+        Output("mosquitlove-collapse", "is_open"),
+        Input("mosquitlove-title", "n_clicks"),
+        State("mosquitlove-collapse", "is_open"),
+        prevent_initial_call=True
+    )
+    def toggle_mosquitlove(n, is_open):
+        return not is_open
 
     @app.callback(
         [Output("interval", "disabled"),
