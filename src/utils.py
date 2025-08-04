@@ -9,6 +9,7 @@ import plotly.express as px
 
 
 
+
 random.seed(42)
 
 
@@ -341,7 +342,11 @@ def detect_rupture_fusion(inter_df, union_df, rupture_df):
 ########## ------- Fonctions traitement des données ------ #########
 def load_inputs(df_json, obj_colors_data, axis_ranges_data):
     try:
-        df = pd.read_json(df_json, orient='split')
+        if not df_json:
+            return None, {}, {}
+
+        # Ne pas spécifier orient='split' car le JSON est au format 'columns'
+        df = pd.read_json(io.StringIO(df_json))
     except ValueError as e:
         return None, {}, {}
 
@@ -350,7 +355,9 @@ def load_inputs(df_json, obj_colors_data, axis_ranges_data):
 
     return df, obj_colors, axis_ranges
 
+
 def prepare_dataframes(df, selected_objects, selected_time, window=0.02):
+
     df_selected_objects = df[df['object'].isin(selected_objects)] if selected_objects else df
     df_all_times = df[df['object'].isin(selected_objects)] if selected_objects else df
     df_t = df[(df['time'] >= selected_time) & (df['time'] < selected_time + window)]
@@ -385,7 +392,7 @@ def create_marker(df_obj, obj, obj_colors, color_by_neighbors, color_by_speed, m
             cmin=speed_min,
             cmax=speed_max,
             showscale=True,
-            colorbar=dict(title="Vitesse")
+            colorbar=dict(title="Vitesse (m/s)")
         )
         showlegend = False
         name = None
@@ -448,11 +455,14 @@ def add_direction_vector(fig, df, obj, selected_time, x_col, y_col):
                     name=f"Direction {obj}"
                 ))
 
+def axis_label(axis_name):
+    return f"{axis_name}(m)"
+
 def update_layout(fig, title, x_title, y_title, x_range, y_range):
     fig.update_layout(
         title=title,
-        xaxis_title=x_title,
-        yaxis_title=y_title,
+        xaxis_title=axis_label(x_title),
+        yaxis_title=axis_label(y_title),
         xaxis=dict(range=x_range),
         yaxis=dict(range=y_range),
         plot_bgcolor='white',
@@ -592,7 +602,7 @@ def add_time_series_trace(fig, segment, obj, color, coords, show_legend=True):
             name=f"{obj} - {coord}",
             line=dict(color=color, dash=dash_styles.get(coord, 'solid')),
             legendgroup=str(obj),
-            showlegend=(show_legend if i == 0 else False)  # 1 seule légende par objet
+            showlegend=show_legend
         ))
 
 
@@ -600,7 +610,7 @@ def update_coord_figure_layout(fig, title, yaxis_title):
     """Applique un layout standard à une figure existante."""
     fig.update_layout(
         title=title,
-        xaxis_title="Temps",
+        xaxis_title="Temps (s)",
         yaxis_title=yaxis_title,
         legend_title="Objet - Coordonnée",
         height=400,

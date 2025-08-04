@@ -1,21 +1,20 @@
-import pandas as pd
-import plotly.graph_objs as go
-from dash import html, Input, Output, State, callback_context, callback
-import dash_bootstrap_components as dbc
-import random
-import numpy as np
-from dash import dash_table
-from dash import dcc
-import plotly.express as px
 import os
 import platform
 import subprocess
-from dash import Input, Output
+import random
+import numpy as np
+import pandas as pd
+import plotly.graph_objs as go
+import plotly.express as px
 
-from utils import *
-from layout import *
-from utils import parse_contents
+from dash import html, dcc, dash_table
+from dash import Input, Output, State, callback_context, callback
+import dash_bootstrap_components as dbc
 
+from .utils import *
+from .utils import parse_contents
+from .layout import *
+from .generate_video import VideoRecorderApp, render_frame, ajuster_temps
 
 
 random.seed(42)
@@ -38,7 +37,8 @@ def register_callbacks(app):
             Output('download-button', 'disabled'),
             Output('select-all', 'disabled'),
             Output('deselect-all', 'disabled'),
-            Output('object-checklist-container', 'children'),
+            Output('object-checklist', 'options'),
+            Output('object-checklist', 'value', allow_duplicate=True),
             Output('file-info', 'children')
         ],
         Input('upload-data', 'contents'),
@@ -82,22 +82,17 @@ def register_callbacks(app):
             html.P(f"Plage de temps: {df['time'].min():.2f} à {df['time'].max():.2f}")
         ])
 
-        return (df.to_json(date_format='iso', orient='split'),
+        return (df.to_json(),
                 obj_colors,
                 axis_ranges,
                 status_message,
                 df['time'].min(),
                 df['time'].max(),
                 df['time'].min(),
-                False,
-                False,
-                df['time'].min(),
-                False,
-                False,
-                False,
-                False,
-                False,
-                object_checklist,
+                False, False, df['time'].min(),
+                False, False, False, False, False,
+                [{"label": str(obj), "value": obj} for obj in sorted_objects],
+                sorted_objects,
                 file_info)
 
     @app.callback(
@@ -107,18 +102,24 @@ def register_callbacks(app):
     )
     def launch_video_script(n_clicks):
         try:
-            script_path = os.path.abspath("generate_video.py")
+            script_path = os.path.abspath("src/generate_video.py")
 
+            # Commande de lancement, directement python ou python3 selon OS
             if platform.system() == "Windows":
-                subprocess.Popen(f'start "" cmd /c python "{script_path}"', shell=True)
-            elif platform.system() == "Darwin":  # macOS
-                subprocess.Popen(["open", "-a", "Terminal", "python3", script_path])
-            else:  # Linux (assume terminal emulator is installed)
-                subprocess.Popen(["x-terminal-emulator", "-e", f"python3 {script_path}"])
+                cmd = ["python", script_path]
+            else:
+                cmd = ["python3", script_path]
 
-            return "✅ Fenêtre de génération vidéo ouverte."
+            # subprocess.run bloque jusqu'à la fin du script
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode == 0:
+                return "✅ Génération vidéo terminée."
+            else:
+                return f"❌ Erreur dans le script : {result.stderr}"
+
         except Exception as e:
-            return f"❌ Erreur lors de l'ouverture : {str(e)}"
+            return f"❌ Exception lors de l'ouverture : {str(e)}"
 
     @app.callback(
         [Output("time-slider", "value", allow_duplicate=True),
@@ -161,7 +162,8 @@ def register_callbacks(app):
         [Input("select-all", "n_clicks"),
          Input("deselect-all", "n_clicks")],
         [State("object-checklist", "options")],
-        prevent_initial_call=True
+        prevent_initial_call=True,
+        allow_duplicate=True
     )
     def toggle_all_objects(select_clicks, deselect_clicks, options):
         ctx = callback_context
@@ -193,6 +195,17 @@ def register_callbacks(app):
             return False, "⏸️ Pause"
         else:
             return True, "▶️ Start"
+
+    @app.callback(
+        Output("object-sidebar", "is_open"),
+        [Input("toggle-objects-sidebar", "n_clicks")],
+        [State("object-sidebar", "is_open")],
+        prevent_initial_call=True
+    )
+    def toggle_sidebar(n_clicks, is_open):
+        if n_clicks:
+            return not is_open
+        return is_open
 
 
     @app.callback(
@@ -233,17 +246,23 @@ def register_callbacks(app):
         [State("upload-data-storage", "data"),
          State("object-colors-storage", "data"),
          State("axis-ranges-storage", "data")],
-        prevent_initial_call=True
+        prevent_initial_call=True,
+        allow_duplicate=True
     )
     def update_graphs(selected_time, selected_graphs, selected_objects, show_trajectory, show_vectors,
                       color_by_speed, min_vectors, distance_threshold, color_by_neighbors,
                       df_json, obj_colors_data, axis_ranges_data):
 
-        # Étape 1 : Charger les données et les paramètres
-        df, obj_colors, axis_ranges = load_inputs(df_json, obj_colors_data, axis_ranges_data)
-        if df is None or not selected_objects:
+
+        if not df_json:
             return html.Div("Veuillez charger un fichier CSV et sélectionner des objets.")
 
+
+        df, obj_colors, axis_ranges = load_inputs(df_json, obj_colors_data, axis_ranges_data)
+
+
+        if df is None or not selected_objects:
+            return html.Div("Veuillez charger un fichier CSV et sélectionner des objets.")
         # Étape 2 : Préparer les DataFrames utiles
         df_t, df_selected_objects, df_all_times = prepare_dataframes(df, selected_objects, selected_time)
 
@@ -381,9 +400,9 @@ def register_callbacks(app):
             fig3d.update_layout(
                 title="Position 3D des objets",
                 scene=dict(
-                    xaxis=dict(title="X", range=[axis_ranges["x_min"], axis_ranges["x_max"]], autorange=False),
-                    yaxis=dict(title="Y", range=[axis_ranges["y_min"], axis_ranges["y_max"]], autorange=False),
-                    zaxis=dict(title="Z", range=[axis_ranges["z_min"], axis_ranges["z_max"]], autorange=False),
+                    xaxis=dict(title="X(m)", range=[axis_ranges["x_min"], axis_ranges["x_max"]], autorange=False),
+                    yaxis=dict(title="Y(m)", range=[axis_ranges["y_min"], axis_ranges["y_max"]], autorange=False),
+                    zaxis=dict(title="Z(m)", range=[axis_ranges["z_min"], axis_ranges["z_max"]], autorange=False),
                     aspectmode='manual',
                     aspectratio=dict(x=1, y=1, z=1)
                 ),
@@ -415,7 +434,7 @@ def register_callbacks(app):
 
             fig_time_series.update_layout(
                 title="X, Y, Z en fonction du temps",
-                xaxis_title="Temps",
+                xaxis_title="Temps (s)",
                 yaxis_title="Position",
                 legend_title="Objet - Coordonnée",
                 height=500,
@@ -491,7 +510,7 @@ def register_callbacks(app):
 
             fig_distance.update_layout(
                 title="Distance entre paires d'objets en fonction du temps",
-                xaxis_title="Temps",
+                xaxis_title="Temps (s)",
                 yaxis_title="Distance (euclidienne)",
                 legend_title="Paires d'objets",
                 height=500,

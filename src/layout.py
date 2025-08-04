@@ -1,20 +1,19 @@
+import random
+import dash_bootstrap_components as dbc
+from dash import dcc, html
 
-
-from utils import *
-from callbacks import *
-
+from .utils import *
+from .callbacks import *
 
 random.seed(42)
 
-import dash_bootstrap_components as dbc
-
 layout = dbc.Container([
     dbc.Row([
+        # Colonne de gauche : tous les contrôles
         dbc.Col([
-            html.H3("Détection de couples", className="my-3 text-primary fw-bold"),
+            html.Img(src="/assets/moustic.png", style={'height': '80px'}, className="my-3"),
 
-            # Bloc : Fichier
-            html.H5("1️⃣ Charger un fichier CSV", className="mt-4 text-secondary"),
+            html.H3(" Charger un fichier CSV", className="mt-4 text-secondary"),
             dcc.Upload(
                 id='upload-data',
                 children=html.Div(['📁 Glisser-déposer ou ', html.A('sélectionner un fichier')]),
@@ -32,10 +31,9 @@ layout = dbc.Container([
             ),
             html.Div(id='upload-status', style={'color': 'green'}),
 
-            # Bloc : Info sur le fichier avec prévention de débordement du texte
             html.Div(
                 id='file-info',
-                title="",  # Info-bulle avec le nom complet
+                title="",
                 style={
                     'margin': '10px 0',
                     'whiteSpace': 'nowrap',
@@ -47,8 +45,21 @@ layout = dbc.Container([
                 }
             ),
 
-            # Bloc : Contrôle du temps
-            html.H5("2️⃣ Contrôle du temps", className="mt-4 text-secondary"),
+            html.H3("Mosqui'Track", style={
+                "backgroundColor": "#FFCCEC",
+                "padding": "1rem",
+                "borderRadius": "10px",
+                "color": "#FF0073",
+                "textAlign": "center",
+                "fontWeight": "bold",
+                "boxShadow": "2px 2px 8px rgba(0,0,0,0.2)"
+            }),
+
+            html.H5("Enregistrer la vidéo", className="mt-4 text-secondary"),
+            dbc.Button("🎥 Enregistrer la vidéo", id="save-video-btn", color="danger", className="mb-2 w-100"),
+            html.Div(id="video-status", style={"fontWeight": "bold", "color": "green"}),
+
+            html.H5(" Sélection du temps", className="mt-4 text-secondary"),
             html.Label("Temps sélectionné :"),
             dcc.Slider(
                 id="time-slider",
@@ -68,19 +79,13 @@ layout = dbc.Container([
                 min=50,
                 max=1000,
                 step=50,
-                value=500,  # Valeur par défaut
+                value=500,
                 marks={i: f"{i} ms" for i in range(100, 1001, 200)},
                 tooltip={"placement": "bottom", "always_visible": False},
                 className="mt-2 mb-3"
             ),
 
-            #Bloc : enregistrer video
-            html.H5("3️⃣ Enregistrer la vidéo", className="mt-4 text-secondary"),
-            dbc.Button("🎥 Enregistrer la vidéo", id="save-video-btn", color="danger", className="mb-2 w-100"),
-            html.Div(id="video-status", style={"fontWeight": "bold", "color": "green"}),
-
-            # Bloc : Affichage des graphes
-            html.H5("4️⃣  Options d'affichage", className="mt-4 text-secondary"),
+            html.H5("4️⃣  Affichage des graphiques", className="mt-4 text-secondary"),
             html.Label("Graphiques à afficher :"),
             dbc.Checklist(
                 id="graph-selection",
@@ -106,7 +111,6 @@ layout = dbc.Container([
                 value=[],
                 inline=True,
             ),
-            # Checklist vecteurs
             dbc.Checklist(
                 id="show-vectors",
                 options=[{"label": "Afficher vecteurs de direction", "value": "vectors"}],
@@ -114,7 +118,6 @@ layout = dbc.Container([
                 inline=True,
             ),
 
-            # Div masqué conditionnellement
             html.Div(
                 id="vector-parameters-container",
                 children=[
@@ -131,7 +134,6 @@ layout = dbc.Container([
                 options=[{"label": "Colorer par vitesse", "value": "by_speed"}],
                 value=[],
                 inline=True,
-                className=""
             ),
             dbc.Checklist(
                 id="color-by-neighbors",
@@ -141,8 +143,15 @@ layout = dbc.Container([
                 className="mb-3"
             ),
 
-            # Bloc : Détection de couples
-            html.H5("5️⃣ Détection de couples", className="mt-4 text-secondary"),
+            html.H3("Mosquit'Love", style={
+                "backgroundColor": "#FFCCEC",
+                "padding": "1rem",
+                "borderRadius": "10px",
+                "color": "#FF0073",
+                "textAlign": "center",
+                "fontWeight": "bold",
+                "boxShadow": "2px 2px 8px rgba(0,0,0,0.2)"
+            }),
 
             dbc.Checklist(
                 id="detect-couples-check",
@@ -157,7 +166,6 @@ layout = dbc.Container([
                 inline=True,
             ),
 
-            # Sliders séparés pour chaque type
             html.Label("Seuil de distance pour les interractions :"),
             dcc.Slider(
                 id="distance-threshold-interraction",
@@ -174,7 +182,6 @@ layout = dbc.Container([
                 tooltip={"placement": "bottom", "always_visible": True}
             ),
 
-
             html.Label("Distance seuil pour fusions/ruptures :"),
             dcc.Slider(
                 id="distance-threshold-unionrupture-slider",
@@ -183,70 +190,77 @@ layout = dbc.Container([
                 tooltip={"placement": "bottom", "always_visible": True}
             ),
 
-            # Boutons
             dbc.Button("Analyser les couples", id="analyze-couples", color="primary", className="mt-3 w-100"),
 
             dcc.Loading(
                 id="loading-analyze",
-                type="circle",  # ou 'default', 'dot'
+                type="circle",
                 fullscreen=True,
                 children=html.Div(id="loading-status")
             ),
-
 
             dbc.Button("Télécharger CSV", id="download-button", color="secondary", className="mt-2 w-100",
                        disabled=True),
             dbc.Button("Afficher les tableaux", id="show-tables-button", color="info", className="mt-2 w-100"),
 
+            html.H3("Mosqu'Investigate", style={
+                "backgroundColor": "#FFCCEC",
+                "padding": "1rem",
+                "borderRadius": "10px",
+                "color": "#FF0073",
+                "textAlign": "center",
+                "fontWeight": "bold",
+                "boxShadow": "2px 2px 8px rgba(0,0,0,0.2)"
+            }),
 
-            # Sortie CSV et état
-            dcc.Download(id="download-csv"),
-            dcc.Loading(
-                id="loading-output",
-                type="circle",
-                fullscreen=True,
-                children=html.Div([
-                    html.Div(id="status-message", style={"fontWeight": "bold", "color": "blue"}),
-                ])
-            ),
-            dcc.Store(id="analysis-complete", data=False),
-            dcc.Store(id='store-interactions'),
-            dcc.Store(id='store-fusions'),
-            dcc.Store(id='store-ruptures'),
-            dcc.Store(id='store-couples'),
-            dcc.Store(id='store-rupture-fusion'),
+        ], width=3, style={
+            "backgroundColor": "#f8f9fa",
+            "padding": "20px",
+            "borderRight": "1px solid #dee2e6"
+        }),
 
-            # Bloc : Objets à afficher
-            html.H5("6️⃣ Objets à afficher", className="mt-4 text-secondary"),
-            dbc.ButtonGroup([
-                dbc.Button("Tout cocher", id="select-all", color="success", size="sm", disabled=True),
-                dbc.Button("Tout décocher", id="deselect-all", color="danger", size="sm", disabled=True),
-            ], className="mb-2"),
-            html.Div(
-                dbc.Checklist(
-                    id="object-checklist",
-                    options=[],
-                    value=[],
-                    inline=False,
-                    style={"maxHeight": "400px", "overflowY": "auto"}
-                ),
-                id="object-checklist-container"
-            )
-
-        ], width=3, style={"backgroundColor": "#f8f9fa", "padding": "20px", "borderRight": "1px solid #dee2e6"}),
-
+        # Colonne centrale
         dbc.Col([
+            html.Div(
+                dbc.Button("🧾 Objets à afficher", id="toggle-objects-sidebar", color="info", size="sm"),
+                style={"textAlign": "right", "marginBottom": "10px"}
+            ),
             html.Div(id="graphs-output"),
             html.Div(id="couples-table-output", className="mt-4")
         ], width=9)
     ]),
 
+    # Panneau rétractable à droite
+    dbc.Offcanvas(
+        title="Objets à afficher",
+        id="object-sidebar",
+        is_open=False,
+        placement="end",
+        scrollable=True,
+        style={"width": "300px"},
+        children=[
+            dbc.ButtonGroup([
+                dbc.Button("Tout cocher", id="select-all", color="success", size="sm", disabled=False),
+                dbc.Button("Tout décocher", id="deselect-all", color="danger", size="sm", disabled=False),
+            ], className="mb-2"),
+            dbc.Checklist(
+                id="object-checklist",
+                options=[],
+                value=[],
+                inline=False,
+                style={"maxHeight": "400px", "overflowY": "auto"}
+            )
+        ]
+    ),
 
-
-# Stores
-dcc.Store(id='upload-data-storage'),
-dcc.Store(id='object-colors-storage'),
-dcc.Store(id='axis-ranges-storage'),
+    # Stores
+    dcc.Store(id='upload-data-storage'),
+    dcc.Store(id='object-colors-storage'),
+    dcc.Store(id='axis-ranges-storage'),
+    dcc.Store(id="analysis-complete", data=False),
+    dcc.Store(id='store-interactions'),
+    dcc.Store(id='store-fusions'),
+    dcc.Store(id='store-ruptures'),
+    dcc.Store(id='store-couples'),
+    dcc.Store(id='store-rupture-fusion'),
 ], fluid=True)
-
-
