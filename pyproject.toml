@@ -3,25 +3,25 @@ requires = ["setuptools>=61.2", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-exclude = ["Tests"]
+where = ["."]
 
 [project]
-name = "Pmosquito"
-version = "1.2"
-description = "This project allows for the analysis, grouping, and reconstruction of mosquito trajectories using spatio-temporal data. It supports both manual and automatic analysis based on clustering and proximity parameters."
+name = "moustic"
+version = "1.1"
+description = "This project allows us to visualize swarms of mosquitoes, detect interactions from their trajectories and provides access to some research ideas on the nature of these interactions. "
 authors = [{ name = "Anaïs Denis" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.8"
 dependencies = [
+  "dash",
+  "dash-bootstrap-components",
   "pandas",
   "numpy",
-  "scikit-learn",
-  "matplotlib",
-  "seaborn"
+  "plotly",
+  "matplotlib"
 ]
 
 [project.scripts]
-pmosquito = "PMosquito.PMosquito:main"
+moustic = "app:main"

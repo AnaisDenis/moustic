@@ -2,23 +2,25 @@ from dash import Dash
 import dash_bootstrap_components as dbc
 import random
 
+def main():
+    random.seed(42)
 
+    app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+    server = app.server
 
-random.seed(42)
+    app.config.suppress_callback_exceptions = True
+    app.config.prevent_initial_callbacks = 'initial_duplicate'
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-server = app.server
+    # Importer layout **après** la création de `app`
+    from src.layout import layout
+    app.layout = layout
 
-app.config.suppress_callback_exceptions = True
-app.config.prevent_initial_callbacks = 'initial_duplicate'
+    # Enregistrer les callbacks
+    from src.callbacks import register_callbacks
+    register_callbacks(app)
 
-# Importer layout **après** création de app
-from src.layout import layout
-app.layout = layout
-
-# Importer callbacks ET enregistrer les callbacks **après** création de app
-from src.callbacks import register_callbacks
-register_callbacks(app)   # appel d’une fonction à définir dans callbacks.py
-
-if __name__ == '__main__':
     app.run(debug=True)
+
+# Permet d'exécuter directement le script OU via `moustic` depuis pyproject.toml
+if __name__ == '__main__':
+    main()
