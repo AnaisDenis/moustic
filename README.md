@@ -6,6 +6,6 @@
 
     .\env\Scripts\activate
 
-    pip install -r requirements.txt
+    pip install .
 
     python app.py
