@@ -5,7 +5,6 @@ import numpy as np
 import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-import matplotlib.cm as cm
 from multiprocessing import Pool
 from pathlib import Path
 import shutil
@@ -20,9 +19,16 @@ import multiprocessing
 matplotlib.use('Agg')
 
 # --- CHEMIN FFMPEG ---
-ffmpeg_bin = "C:/Users/2025ad007/Documents/ffmpeg-7.1.1-essentials_build/bin"
+#ffmpeg_bin = "C:/Users/2025ad007/Documents/ffmpeg-7.1.1-essentials_build/bin"
+#os.environ["PATH"] += os.pathsep + ffmpeg_bin
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+ffmpeg_bin = os.path.join(project_root, "bin")
 os.environ["PATH"] += os.pathsep + ffmpeg_bin
-
+try:
+    subprocess.run(["ffmpeg", "-version"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print("✅ FFmpeg est prêt.")
+except Exception:
+    print("❌ FFmpeg est introuvable. Merci de le placer dans le dossier 'bin/' ou de l'ajouter au PATH.")
 
 def ajuster_temps(df):
     df["time"] = (np.ceil(df["time"] / 0.02) * 0.02).round(4)
@@ -408,7 +414,7 @@ class VideoRecorderApp:
                         )
                 trace_data[obj][t] = trace_points
 
-        color_map = cm.get_cmap('tab20')
+        color_map = matplotlib.colormaps['tab20']
         color_dict = {}
         for i, obj in enumerate(selected_objs):
             color_dict[obj] = color_map(i % 20)

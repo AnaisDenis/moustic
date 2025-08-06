@@ -26,4 +26,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Ignorer le dossier généré par MkDocs
+/public/
+
 
