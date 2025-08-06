@@ -1,6 +1,6 @@
 # Contributing to PMosquito
 
-Thank you for your interest in contributing to PMosquito! Here are some guidelines to help make collaboration smooth and efficient.
+Thank you for your interest in contributing to moustic! Here are some guidelines to help make collaboration smooth and efficient.
 
 ## How to Contribute
 
