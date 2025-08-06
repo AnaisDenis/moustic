@@ -16,11 +16,12 @@ license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.8"
 dependencies = [
+  "dash",
+  "dash-bootstrap-components",
   "pandas",
   "numpy",
-  "scikit-learn",
-  "matplotlib",
-  "seaborn"
+  "plotly",
+  "matplotlib"
 ]
 
 [project.scripts]
