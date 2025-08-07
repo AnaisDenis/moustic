@@ -1,17 +1,5 @@
 # moustic
 
- 	  cd path_name
-
-    python -m venv env
-
-    .\env\Scripts\activate
-
-    pip install .
-
-    python app.py
-
-
-
 This project allows us to visualize swarms of mosquitoes, detect interactions from their trajectories and provides access to some research ideas on the nature of these interactions.
 
 <img src="doc/img/IRD.png" width="300" height="100" /> <img src="doc/img/MIVEGEC.png" width="150" height="100" />
