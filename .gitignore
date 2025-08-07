@@ -28,5 +28,4 @@ Thumbs.db
 
 # Ignorer le dossier généré par MkDocs
 /public/
-
-
+site/
