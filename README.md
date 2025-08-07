@@ -163,7 +163,7 @@ Normally you should see your virtual environment name displayed in parentheses a
 
 ### Retrieve this file containing the codes and test 
 
-[Download PMosquito as a ZIP file](https://github.com/AnaisDenis/moustic/archive/refs/heads/main.zip)
+[Download moustic as a ZIP file](https://github.com/AnaisDenis/moustic/archive/refs/heads/main.zip)
 
 You can extract this folder to the directory of your choice: you will find the .zip file in your downloads. Move it by right-clicking, cutting, and pasting it into the directory of your choice. Then right-click and extract here.
 
