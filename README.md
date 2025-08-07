@@ -1,4 +1,5 @@
 # moustic
+<img src="doc/img/moustic.png" width="400" height="130" />
 
 This project allows us to visualize swarms of mosquitoes, detect interactions from their trajectories and provides access to some research ideas on the nature of these interactions.
 
