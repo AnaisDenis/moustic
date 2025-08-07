@@ -1,4 +1,4 @@
-# Welcome to Mosqui'Track documentation! Tests3
+# Welcome to Mosqui'Track documentation! Tests last
 <img src="img/IRD.png" width="300" height="100" />
 
 <img src="/doc/img/mosquitrack/mosquitrack.png" />
@@ -30,6 +30,7 @@ For questions or suggestions, please contact:
 olivier.roux@ird.fr
 
 Project developed as part of a Master's thesis on mosquito behavior analysis.
+
 
 
 
