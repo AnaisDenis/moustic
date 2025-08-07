@@ -26,9 +26,9 @@ ffmpeg_bin = os.path.join(project_root, "bin")
 os.environ["PATH"] += os.pathsep + ffmpeg_bin
 try:
     subprocess.run(["ffmpeg", "-version"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    print("✅ FFmpeg est prêt.")
+    print("FFmpeg est prêt.")
 except Exception:
-    print("❌ FFmpeg est introuvable. Merci de le placer dans le dossier 'bin/' ou de l'ajouter au PATH.")
+    print(" FFmpeg est introuvable. Merci de le placer dans le dossier 'bin/' ou de l'ajouter au PATH.")
 
 def ajuster_temps(df):
     df["time"] = (np.ceil(df["time"] / 0.02) * 0.02).round(4)

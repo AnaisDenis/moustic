@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.express as px
+import sys
 
 from dash import html, dcc, dash_table
 from dash import Input, Output, State, callback_context, callback
@@ -107,7 +108,7 @@ def register_callbacks(app):
 
             # Commande de lancement, directement python ou python3 selon OS
             if platform.system() == "Windows":
-                cmd = ["python", script_path]
+                cmd = [sys.executable, script_path]
             else:
                 cmd = ["python3", script_path]
 
