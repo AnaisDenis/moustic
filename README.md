@@ -197,54 +197,54 @@ Next, you need to unzip the downloaded file. Open the ffmpeg folder, then the bi
 
 
 ## Project Structure
-
-│   .gitignore
-│   app.py
-│   CONTRIBUTING.md
-│   LICENSE
-│   mkdocs.yml
-│   pyproject.toml
-│   README.md
-│   requirements.txt
-│
-├───.github
-│   └───workflows
-│           main.yml
-│           mkdocs.yml
-│
-├───.idea
-│   │   .gitignore
-│   │   Detect_couple_v1.1.iml
-│   │   misc.xml
-│   │   modules.xml
-│   │   vcs.xml
-│   │
-│   └───inspectionProfiles
-│           profiles_settings.xml
-│           Project_Default.xml
-│
-├───assets
-│       moustic.png
-│
-├───data
-│       PostProc_Filtered_2020_09_03_18_15_53_Splined_reconstitue.csv
-│
-├───doc
-│   │   index.md
-│   │   install.md
-│   │   usage.md
-│   │
-│   └───img
-│           IRD.png
-│           MIVEGEC.png
-│
-└───src
-        callbacks.py
-        generate_video.py
-        layout.py
-        utils.py
-        __init__.py
-
+	
+	│   .gitignore
+	│   app.py
+	│   CONTRIBUTING.md
+	│   LICENSE
+	│   mkdocs.yml
+	│   pyproject.toml
+	│   README.md
+	│   requirements.txt
+	│
+	├───.github
+	│   └───workflows
+	│           main.yml
+	│           mkdocs.yml
+	│
+	├───.idea
+	│   │   .gitignore
+	│   │   Detect_couple_v1.1.iml
+	│   │   misc.xml
+	│   │   modules.xml
+	│   │   vcs.xml
+	│   │
+	│   └───inspectionProfiles
+	│           profiles_settings.xml
+	│           Project_Default.xml
+	│
+	├───assets
+	│       moustic.png
+	│
+	├───data
+	│       PostProc_Filtered_2020_09_03_18_15_53_Splined_reconstitue.csv
+	│
+	├───doc
+	│   │   index.md
+	│   │   install.md
+	│   │   usage.md
+	│   │
+	│   └───img
+	│           IRD.png
+	│           MIVEGEC.png
+	│
+	└───src
+	        callbacks.py
+	        generate_video.py
+	        layout.py
+	        utils.py
+	        __init__.py
+	
 
 
 ## Contact
