@@ -1,14 +1,14 @@
 # Project information
-site_name: PMosquito
+site_name: moustic
 site_author: Anais Denis
-site_url: 'https://github.com/AnaisDenis/PMosquito'
-site_description: PMosquito
+site_url: 'https://github.com/AnaisDenis/moustic'
+site_description: moustic
 site_dir: site# When you build your site, all of the files are written to the directory assigned to the site_dir configuration option (defaults to "site")
 docs_dir: doc # The directory that holds the documentation source files (the MkDocs documentation)
 
 # Repository
-repo_name: 'PMosquito'
-repo_url: 'https://github.com/AnaisDenis/PMosquito'
+repo_name: 'moustic'
+repo_url: 'https://github.com/AnaisDenis/moustic'
 edit_uri: edit/main/docs/ # Allow to replace edit/master/docs use by default
 
 # Configuration
@@ -86,9 +86,15 @@ extra:
 
 # page tree
 nav:
-    - PMosquito Home: 
+    - moustic home: 
       - index.md
-    - Install:
-      - install.md
-    - Usage:
+    - Install python:
+      - install_python.md
+    - Open moustic:
       - usage.md
+    - Mosqui'Track:
+      - mosquitrack.md
+    - Mosquit'Love:
+      - mosquitlove.md
+    -Mosqu'Investigate:
+      - mosquinvestigate.md
