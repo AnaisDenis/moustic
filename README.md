@@ -1,16 +1,4 @@
-# Detect_couple
-
- 	  cd path_name
-
-    python -m venv env
-
-    .\env\Scripts\activate
-
-    pip install .
-
-    python app.py
-
-
+# moustic
 
 This project allows us to visualize swarms of mosquitoes, detect interactions from their trajectories and provides access to some research ideas on the nature of these interactions.
 
@@ -197,15 +185,54 @@ Next, you need to unzip the downloaded file. Open the ffmpeg folder, then the bi
 
 
 ## Project Structure
-
-
-## Tests files
-
-
-## Available Parameters
-
-
-## Run Example
+	
+	│   .gitignore
+	│   app.py
+	│   CONTRIBUTING.md
+	│   LICENSE
+	│   mkdocs.yml
+	│   pyproject.toml
+	│   README.md
+	│   requirements.txt
+	│
+	├───.github
+	│   └───workflows
+	│           main.yml
+	│           mkdocs.yml
+	│
+	├───.idea
+	│   │   .gitignore
+	│   │   Detect_couple_v1.1.iml
+	│   │   misc.xml
+	│   │   modules.xml
+	│   │   vcs.xml
+	│   │
+	│   └───inspectionProfiles
+	│           profiles_settings.xml
+	│           Project_Default.xml
+	│
+	├───assets
+	│       moustic.png
+	│
+	├───data
+	│       PostProc_Filtered_2020_09_03_18_15_53_Splined_reconstitue.csv
+	│
+	├───doc
+	│   │   index.md
+	│   │   install.md
+	│   │   usage.md
+	│   │
+	│   └───img
+	│           IRD.png
+	│           MIVEGEC.png
+	│
+	└───src
+	        callbacks.py
+	        generate_video.py
+	        layout.py
+	        utils.py
+	        __init__.py
+	
 
 
 ## Contact
