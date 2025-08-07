@@ -175,10 +175,25 @@ Once your virtual environment is activated and you are in the project directory 
 
 This command will install:
 - the `moustic` tool,
-- all required dependencies: `pandas`, `numpy`, `scikit-learn`, `matplotlib`, `seaborn`.
+- all required dependencies
 
+Now, if you copy and paste in your terminal : 
+	
+   python app.py
 
+You should see a URL like this: http://127.0.0.1:8050/
+You can click on it if it appears interactive. Otherwise, copy and paste this URL into your browser.
+
+Congratulations ! You can use moustic !
+
+Note: The Moustic app allows you to download swarm videos. This feature requires downloading an application (see Install FFMPEG section).
 ### Install FFMPEG
+
+To download ffmpeg.exe, you can download the file in .7z [here]( https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.7z)
+Or, you can download the file in .zip [here](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip)
+
+Next, you need to unzip the downloaded file. Open the ffmpeg folder, then the bin folder. Copy the ffmpeg.exe file and paste it into the bin file located in the moustic-main folder.
+
 
 
 ## Project Structure
