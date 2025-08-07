@@ -7,7 +7,7 @@ This project allows us to visualize swarms of mosquitoes, detect interactions fr
 
 ---
 
-👉 **Access the documentation site here:** [moustic Web Page](https://anaisdenis.github.io/moustic/)
+👉 **Access the documentation site here:** [moustic Web Page](https://anaisdenis.github.io/moustic/) 
 
 ## Exigence 
 
