@@ -1,6 +1,6 @@
 # Welcome to Mosqui'Track documentation!
 
-<img src="img/mosquitrack/mosquitrack.png" width="300" height="100" />
+<img src="img/mosquitrack/mosquitrack.png" />
 
 ## 1- Graphes en 2D et 3D
 <img src="img/mosquitrack/graphes.png" width="300" height="100" />
@@ -29,3 +29,4 @@ For questions or suggestions, please contact:
 olivier.roux@ird.fr
 
 Project developed as part of a Master's thesis on mosquito behavior analysis.
+
