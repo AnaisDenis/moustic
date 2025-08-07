@@ -3,7 +3,7 @@
 <img src="img/mosquitrack.png" />
 
 ## 1- Graphes en 2D et 3D 
-<img src="/moustic/doc/img/mosquitrack/graphes.png" /> 
+<img src="/doc/img/mosquitrack/graphes.png" /> 
 
 ## 2- Graphes des axes de trajectoires en fonction du temps 
 <img src="img/xyzt.png"  />
@@ -29,6 +29,7 @@ For questions or suggestions, please contact:
 olivier.roux@ird.fr
 
 Project developed as part of a Master's thesis on mosquito behavior analysis.
+
 
 
 
