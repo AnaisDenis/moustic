@@ -1,4 +1,4 @@
-# Welcome to Mosqui'Track documentation! 
+# Welcome to Mosqui'Track documentation! Tests
 
 <img src="/doc/img/mosquitrack/mosquitrack.png" />
 
@@ -29,6 +29,7 @@ For questions or suggestions, please contact:
 olivier.roux@ird.fr
 
 Project developed as part of a Master's thesis on mosquito behavior analysis.
+
 
 
 
