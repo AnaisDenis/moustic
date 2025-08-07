@@ -34,4 +34,4 @@ jobs:
       - name: Install 
         run: pip install .
       - name: test
-        run: pmosquito -h
+        run: python app.py --help
