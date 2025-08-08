@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.graph_objs as go
 import plotly.express as px
 import sys
+import json
 
 from dash import html, dcc, dash_table
 from dash import Input, Output, State, callback_context, callback
@@ -594,10 +595,12 @@ def register_callbacks(app):
         prevent_initial_call=True
     )
     def run_all_detections(n_clicks, df_json, threshold_inter, threshold_union, checkbox_values, min_duration):
+
         if df_json is None:
             return None, None, None, None, None
 
-        df = pd.read_json(df_json, orient="split")
+        df = pd.read_json(df_json)
+
 
         inter_df, union_df, rupture_df, couples_df, rupture_fusion_df = None, None, None, None, None
 
@@ -647,7 +650,7 @@ def register_callbacks(app):
             inter_df = pd.read_json(inter_json, orient="split")
             results.append(
                 html.Div([
-                    html.H4("💬 Interactions détectées", className="text-info fw-bold mt-4"),
+                    html.H4("💬 Rapprochements détectés", className="text-info fw-bold mt-4"),
                     dbc.Card(
                         dbc.CardBody([
                             dash_table.DataTable(

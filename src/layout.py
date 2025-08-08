@@ -153,7 +153,9 @@ layout = dbc.Container([
                 dbc.Checklist(
                     id="detect-couples-check",
                     options=[
-                        {"label": "Détecter les interactions", "value": "detect_interaction"},
+
+
+                        {"label": "Détecter les rapprochements", "value": "detect_interaction"},
                         {"label": "Détecter les fusions", "value": "detect_union"},
                         {"label": "Détecter les ruptures", "value": "detect_rupture"},
                         {"label": "Détecter les fusions-ruptures", "value": "detect_couples"},
@@ -162,12 +164,18 @@ layout = dbc.Container([
                     value=[], inline=True
                 ),
 
-                html.Label("Seuil de distance pour les interractions :"),
+
+
+
+                html.Label("Seuil de distance pour les rapprochements :"),
                 dcc.Slider(id="distance-threshold-interraction", min=0, max=0.1, step=0.001, value=0.055,
                            marks={i: str(i) for i in [0, 0.02, 0.04, 0.06, 0.08, 0.1]},
                            tooltip={"placement": "bottom", "always_visible": True}),
 
-                html.Label("Durée minimale d'une interaction (s) :"),
+
+
+
+                html.Label("Durée minimale d'un rapprochement (s) :"),
                 dcc.Slider(id="min-duration-threshold", min=0, max=5, step=0.1, value=1.0,
                            marks={i: f"{i}s" for i in range(6)},
                            tooltip={"placement": "bottom", "always_visible": True}),
@@ -181,10 +189,16 @@ layout = dbc.Container([
                 dcc.Loading(id="loading-analyze", type="circle", fullscreen=True,
                             children=html.Div(id="loading-status")),
                 dbc.Button("Télécharger CSV", id="download-button", color="secondary", className="mt-2 w-100",
-                           disabled=True),
+                           disabled=False),
+                dcc.Download(id="download-csv"),
+
                 dbc.Button("Afficher les tableaux", id="show-tables-button", color="info", className="mt-2 w-100"),
+                html.Div(id="status-message", style={"marginTop": "10px", "color": "red"}),
             ]),
         ], width=3, style={"backgroundColor": "#f8f9fa", "padding": "20px", "borderRight": "1px solid #dee2e6"}),
+        
+
+                
 
         # Colonne centrale
         dbc.Col([
