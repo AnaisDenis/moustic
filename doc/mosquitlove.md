@@ -13,7 +13,7 @@ You can adjust the distance threshold for approaches, the minimum duration to co
 
 ## 2 – Run the program  
 
-After selecting your options, press **Analyze Couples**. A loading screen will appear. This may take a few moments.  
+After selecting your options, press **Analyser les couples**. A loading screen will appear. This may take a few moments.  
 Once it finishes, you can:  
 - press **Télécharger CSV**: a CSV file containing the information found in your CSV will be saved in your computer’s download folder.  
 - press **Afficher les tableaux**: summary tables like those shown below will appear on the main page to display the results.  
@@ -21,6 +21,7 @@ Once it finishes, you can:
 > **Note:** This section does not take into account the choice of selected objects or the selected time in the web interface. The analysis will be performed on the entire CSV file.  
 
 <img src="/moustic/img/mosquitlove/tableaux.png" />
+
 
 
 
