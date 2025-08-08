@@ -1,7 +1,7 @@
-# Welcome to Mosqui'Track documentation! Tests last
-<img src="img/IRD.png" width="300" height="100" />
+# Welcome to Mosqui'Track documentation! Tests 9h55
+<img src="/moustic/img/IRD.png" />
 
-<img src="/doc/img/mosquitrack/mosquitrack.png" />
+<img src="/moustic/img/mosquitrack/mosquitrack.png" />
 
 ## 1- Graphes en 2D et 3D 
 <img src="img/mosquitrack/graphes.png" />
@@ -30,6 +30,7 @@ For questions or suggestions, please contact:
 olivier.roux@ird.fr
 
 Project developed as part of a Master's thesis on mosquito behavior analysis.
+
 
 
 
