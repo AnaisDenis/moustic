@@ -91,6 +91,9 @@ You must write in your terminal:
 	
  	cd <path_to_moustic>
 
+Example:
+
+cd /Users/alex/Downloads/moustic-main
 
 **Note**: To find your path:
 Open File Explorer.
