@@ -88,9 +88,9 @@ extra:
 nav:
     - moustic home: 
       - index.md
-    - Install python:
+    - Install moustic:
       - install_python.md
-    - Open moustic:
+    - Usage:
       - usage.md
     - Mosqui'Track:
       - mosquitrack.md
