@@ -141,7 +141,7 @@ Now, if you copy and paste in your terminal :
 You should see a URL like this: http://127.0.0.1:8050/
 You can click on it if it appears interactive. Otherwise, copy and paste this URL into your browser.
 
-Congratulations ! You can use moustic !
+Congratulations ! You can use moustic ! Next time, just reactivate the virtual environment and launch the application.
 
 Note: The Moustic app allows you to download swarm videos. This feature requires downloading an application (see Install FFMPEG section).
 ### Install FFMPEG
