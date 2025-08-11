@@ -1,9 +1,9 @@
 # Welcome to moustic documentation!
 
-## moustic 
+<img src="img/moustic.png" width="400" height="130" />
 
 This project allows us to visualize swarms of mosquitoes, detect interactions from their trajectories and provides access to some research ideas on the nature of these interactions.
-<img src="img/IRD.png" width="300" height="100" /> <img src="img/MIVEGEC.png" width="150" height="100" /> <img src="img/moustic.png" width="400" height="130" />
+<img src="img/IRD.png" width="300" height="100" /> <img src="img/MIVEGEC.png" width="150" height="100" /> 
 
 ## Table of Contents
 
