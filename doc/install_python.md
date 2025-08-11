@@ -1,8 +1,10 @@
-# PMosquito – Assembly of interrupted trajectory data by videotracking
+# Installation of moustic
 
-## How to install 
+### Retrieve this file containing the codes and test 
 
-## Installation of Pmosquito
+[Download moustic as a ZIP file](https://github.com/AnaisDenis/moustic/archive/refs/heads/main.zip)
+
+You can extract this folder to the directory of your choice: you will find the .zip file in your downloads. Move it by right-clicking, cutting, and pasting it into the directory of your choice. Then right-click and extract here.
 
 ### Open a terminal
 A terminal (or command prompt) is a tool that allows you to interact with your computer by typing text commands. Unlike a graphical interface (where you click buttons), the terminal allows you to execute specific instructions, such as launching a Python script, installing libraries, or navigating through your project folders.
@@ -84,24 +86,24 @@ It is recommended to use a virtual environment:
 - Each virtual environment contains its own version of Python and its own packages, independent of other projects or the system installation. This prevents a package update for one project from breaking another.
 - You can install exactly the versions of libraries needed for one project without affecting others. Perfect for replicating an environment on another machine.
 
-In your terminal you need to move to the Pmosquito-main directory
+In your terminal you need to move to the moustic-main directory
 You must write in your terminal: 
 	
- 	cd path_name
+ 	cd <path_to_moustic>
+
 
 **Note**: To find your path:
 Open File Explorer.
 Go to your project folder.
 Click in the address bar at the top: the path will appear.
 
-Then, type :
+Then, copy :
 
 	python -m venv env
 
-Here, env is the name of the virtual environment. You can choose a different name if you wish.
 This creates an env/ folder containing an isolated Python installation.
 
-Then ypu need to activate your virtual environment. Type always in your terminal :
+Then you need to activate your virtual environment. Type always in your terminal :
 
 **For Windows**
 
@@ -115,17 +117,38 @@ Normally you should see your virtual environment name displayed in parentheses a
 
 ### Retrieve this file containing the codes and test 
 
-[Download PMosquito as a ZIP file](https://github.com/AnaisDenis/PMosquito/archive/refs/heads/main.zip)
+[Download moustic as a ZIP file](https://github.com/AnaisDenis/moustic/archive/refs/heads/main.zip)
 
 You can extract this folder to the directory of your choice: you will find the .zip file in your downloads. Move it by right-clicking, cutting, and pasting it into the directory of your choice. Then right-click and extract here.
 
-### Install Pmosquito
+### Install moustic
 
-Once your virtual environment is activated and you are in the project directory (the folder that contains `pyproject.toml`), install Pmosquito and its dependencies with:
+Once your virtual environment is activated and you are in the project directory (the folder that contains `pyproject.toml`), install moustic and its dependencies with:
 
     pip install .
 
 This command will install:
-- the `Pmosquito` tool,
-- all required dependencies: `pandas`, `numpy`, `scikit-learn`, `matplotlib`, `seaborn`.
+- the `moustic` tool,
+- all required dependencies
+### Open moustic
+
+### Install moustic
+
+Now, if you copy and paste in your terminal : 
+
+    python app.py
+
+You should see a URL like this: http://127.0.0.1:8050/
+You can click on it if it appears interactive. Otherwise, copy and paste this URL into your browser.
+
+Congratulations ! You can use moustic !
+
+Note: The Moustic app allows you to download swarm videos. This feature requires downloading an application (see Install FFMPEG section).
+### Install FFMPEG
+
+To download ffmpeg.exe, you can download the file in .7z [here]( https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.7z)
+Or, you can download the file in .zip [here](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip)
+
+Next, you need to unzip the downloaded file. Open the ffmpeg folder, then the bin folder. Copy the ffmpeg.exe file and paste it into the bin file located in the moustic-main folder.
+
 
