@@ -464,7 +464,7 @@ def register_callbacks(app):
             fig_time_series.update_layout(
                 title="X, Y, Z versus time",
                 xaxis_title="Time (s)",
-                yaxis_title="Position",
+                yaxis_title="Position (m)",
                 legend_title="Object - Coordinates",
                 height=500,
                 plot_bgcolor='white',

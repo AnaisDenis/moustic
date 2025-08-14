@@ -28,7 +28,7 @@ try:
     subprocess.run(["ffmpeg", "-version"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print("FFmpeg est prêt.")
 except Exception:
-    print(" FFmpeg est introuvable. Merci de le placer dans le dossier 'bin/' ou de l'ajouter au PATH.")
+    print(" FFmpeg could not be found. To access the video recording functionality, please place it in the 'bin/' folder or add it to the PATH.")
 
 def ajuster_temps(df):
     df["time"] = (np.ceil(df["time"] / 0.02) * 0.02).round(4)
