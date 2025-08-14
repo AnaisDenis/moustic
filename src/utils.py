@@ -53,12 +53,12 @@ def parse_contents(contents, filename):
         # Assurez-vous que les clés dans obj_colors sont du même type que les valeurs dans df['object']
         df['color'] = df['object'].map(lambda x: obj_colors.get(str(x), "#000000"))
 
-        return df, obj_colors, "Fichier chargé avec succès"
+        return df, obj_colors, "File uploaded successfully"
 
     except Exception as e:
-        return None, None, f"Erreur lors du chargement du fichier: {str(e)}"
+        return None, None, f"Error loading file: {str(e)}"
 
-# Liste de couleurs spécifiques (vous pouvez en ajouter plus si nécessaire)
+# Liste de couleurs spécifiques 
 color_palette = [
     "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
     "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
@@ -380,7 +380,7 @@ def create_marker(df_obj, obj, obj_colors, color_by_neighbors, color_by_speed, m
             cmin=0,
             cmax=max_neighbors,
             showscale=True,
-            colorbar=dict(title="Voisins")
+            colorbar=dict(title="Neighbors")
         )
         showlegend = False
         name = None
@@ -392,7 +392,7 @@ def create_marker(df_obj, obj, obj_colors, color_by_neighbors, color_by_speed, m
             cmin=speed_min,
             cmax=speed_max,
             showscale=True,
-            colorbar=dict(title="Vitesse (m/s)")
+            colorbar=dict(title="Speed (m/s)")
         )
         showlegend = False
         name = None
@@ -484,7 +484,7 @@ def create_marker_3d(df_obj, obj, obj_colors, color_by_neighbors, color_by_speed
             cmin=0,
             cmax=max_neighbors,
             showscale=True,
-            colorbar=dict(title="Voisins")
+            colorbar=dict(title="Neighbors")
         )
         showlegend = False
         name = None
@@ -496,7 +496,7 @@ def create_marker_3d(df_obj, obj, obj_colors, color_by_neighbors, color_by_speed
             cmin=speed_min,
             cmax=speed_max,
             showscale=True,
-            colorbar=dict(title="Vitesse"),
+            colorbar=dict(title="Speed"),
             symbol='diamond' if is_star else 'circle'
         )
         showlegend = False
@@ -610,9 +610,9 @@ def update_coord_figure_layout(fig, title, yaxis_title):
     """Applique un layout standard à une figure existante."""
     fig.update_layout(
         title=title,
-        xaxis_title="Temps (s)",
-        yaxis_title=yaxis_title,
-        legend_title="Objet - Coordonnée",
+        xaxis_title="Time (s)",
+        yaxis_title=f"{yaxis_title} (m)",
+        legend_title="Object - Coordinate",
         height=400,
         plot_bgcolor='white',
         paper_bgcolor='white',

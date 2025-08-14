@@ -122,7 +122,7 @@ def register_callbacks(app):
                 return f"❌ Error in the script: {result.stderr}"
 
         except Exception as e:
-            return Exception when opening:{str(e)}"
+            return "Exception when opening:{str(e)}"
 
     @app.callback(
         [Output("time-slider", "value", allow_duplicate=True),
@@ -538,10 +538,10 @@ def register_callbacks(app):
                 add_distance_trace(fig_distance, df1, df2, obj1, obj2, color)
 
             fig_distance.update_layout(
-                title="Distance entre paires d'objets en fonction du temps",
-                xaxis_title="Temps (s)",
-                yaxis_title="Distance (euclidienne)",
-                legend_title="Paires d'objets",
+                title="Distance between pairs of objects as a function of time",
+                xaxis_title="Time (s)",
+                yaxis_title="Distance (Euclidean)",
+                legend_title="Pairs of objects",
                 height=500,
                 plot_bgcolor='white',
                 paper_bgcolor='white',
