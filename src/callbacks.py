@@ -80,9 +80,9 @@ def register_callbacks(app):
 
         # Informations sur le fichier
         file_info = html.Div([
-            html.P(f"Fichier: {filename}"),
-            html.P(f"Nombre d'objets: {len(sorted_objects)}"),
-            html.P(f"Plage de temps: {df['time'].min():.2f} à {df['time'].max():.2f}")
+            html.P(f"File: {filename}"),
+            html.P(f"Number of objects: {len(sorted_objects)}"),
+            html.P(f"Time range: {df['time'].min():.2f} à {df['time'].max():.2f}")
         ])
 
         return (df.to_json(),
@@ -117,12 +117,12 @@ def register_callbacks(app):
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode == 0:
-                return "✅ Génération vidéo terminée."
+                return "✅ Video generation complete."
             else:
-                return f"❌ Erreur dans le script : {result.stderr}"
+                return f"❌ Error in the script: {result.stderr}"
 
         except Exception as e:
-            return f"❌ Exception lors de l'ouverture : {str(e)}"
+            return Exception when opening:{str(e)}"
 
     @app.callback(
         [Output("time-slider", "value", allow_duplicate=True),
@@ -221,7 +221,7 @@ def register_callbacks(app):
             return dash.no_update, dash.no_update
 
         if disabled:
-            return False, "⏸️ Pause"
+            return False, "⏸️ Break"
         else:
             return True, "▶️ Start"
 
@@ -284,19 +284,19 @@ def register_callbacks(app):
 
 
         if not df_json:
-            return html.Div("Veuillez charger un fichier CSV et sélectionner des objets.")
+            return html.Div("Please upload a CSV file and select objects.")
 
 
         df, obj_colors, axis_ranges = load_inputs(df_json, obj_colors_data, axis_ranges_data)
 
 
         if df is None or not selected_objects:
-            return html.Div("Veuillez charger un fichier CSV et sélectionner des objets.")
+            return html.Div("Please upload a CSV file and select objects.")
         # Étape 2 : Préparer les DataFrames utiles
         df_t, df_selected_objects, df_all_times = prepare_dataframes(df, selected_objects, selected_time)
 
         if df_selected_objects.empty:
-            return html.Div("Aucun des objets sélectionnés n'a été trouvé dans les données.")
+            return html.Div("None of the selected objects were found in the data.")
 
         # Étape 3 : Ajouter colonnes de vitesse et de voisins
         df_t, max_neighbors = compute_speed_and_neighbors(df_t, color_by_neighbors)
@@ -339,7 +339,7 @@ def register_callbacks(app):
                 if show_vectors and "vectors" in show_vectors:
                     add_direction_vector(fig_xy, df, obj, selected_time, "YSplined", "XSplined")
 
-            update_layout(fig_xy, "X en fonction de Y", "Y", "X",
+            update_layout(fig_xy, "X as a function of Y", "Y", "X",
                           [axis_ranges['y_min'], axis_ranges['y_max']],
                           [axis_ranges['x_min'], axis_ranges['x_max']])
             plots.append(dcc.Graph(figure=fig_xy))
@@ -362,7 +362,7 @@ def register_callbacks(app):
                 if show_vectors and "vectors" in show_vectors:
                     add_direction_vector(fig_xz, df, obj, selected_time, "ZSplined", "XSplined")
 
-            update_layout(fig_xz, "X en fonction de Z", "Z", "X",
+            update_layout(fig_xz, "X as a function of Z", "Z", "X",
                           [axis_ranges['z_min'], axis_ranges['z_max']],
                           [axis_ranges['x_min'], axis_ranges['x_max']])
             plots.append(dcc.Graph(figure=fig_xz))
@@ -385,14 +385,14 @@ def register_callbacks(app):
                 if show_vectors and "vectors" in show_vectors:
                     add_direction_vector(fig_yz, df, obj, selected_time, "ZSplined", "YSplined")
 
-            update_layout(fig_yz, "Y en fonction de Z", "Z", "Y",
+            update_layout(fig_yz, "Y as a function of Z", "Z", "Y",
                           [axis_ranges['z_min'], axis_ranges['z_max']],
                           [axis_ranges['y_min'], axis_ranges['y_max']])
             plots.append(dcc.Graph(figure=fig_yz))
 
 
-        # Partie à modifier dans la section où vous traitez les vecteurs dans le graphique 3D
-        # Trouver la section suivante dans la fonction update_graphs:
+        
+        
 
         if "3d" in selected_graphs:
             fig3d = go.Figure()
@@ -427,7 +427,7 @@ def register_callbacks(app):
                     add_vector_3d(fig3d, df, obj, selected_time, pointing_sources)
 
             fig3d.update_layout(
-                title="Position 3D des objets",
+                title="3D position of objects",
                 scene=dict(
                     xaxis=dict(title="X(m)", range=[axis_ranges["x_min"], axis_ranges["x_max"]], autorange=False),
                     yaxis=dict(title="Y(m)", range=[axis_ranges["y_min"], axis_ranges["y_max"]], autorange=False),
@@ -462,10 +462,10 @@ def register_callbacks(app):
 
 
             fig_time_series.update_layout(
-                title="X, Y, Z en fonction du temps",
-                xaxis_title="Temps (s)",
+                title="X, Y, Z versus time",
+                xaxis_title="Time (s)",
                 yaxis_title="Position",
-                legend_title="Objet - Coordonnée",
+                legend_title="Object - Coordinates",
                 height=500,
                 plot_bgcolor='white',
                 paper_bgcolor='white',
@@ -505,7 +505,7 @@ def register_callbacks(app):
 
             for coord, fig in figs.items():
                 if fig is not None:
-                    update_coord_figure_layout(fig, f"{coord} en fonction du temps", coord)
+                    update_coord_figure_layout(fig, f"{coord} versus time", coord)
                     plots.append(dcc.Graph(figure=fig))
 
         other_graphs = []
@@ -516,10 +516,10 @@ def register_callbacks(app):
         for graph in plots:
             title = graph.figure.layout.title.text.lower() if hasattr(graph.figure.layout, "title") else ""
 
-            if "x, y, z en fonction du temps" in title:
+            if "x, y, y versus time" in title:
                 xyzt_graph = graph
             elif any(coord in title for coord in
-                     ["x en fonction du temps", "y en fonction du temps", "z en fonction du temps"]):
+                     ["x versus time", "y versus time", "z versus time"]):
                 time_series_basic.append(graph)
             else:
                 other_graphs.append(graph)
@@ -650,7 +650,7 @@ def register_callbacks(app):
             inter_df = pd.read_json(inter_json, orient="split")
             results.append(
                 html.Div([
-                    html.H4("💬 Rapprochements détectés", className="text-info fw-bold mt-4"),
+                    html.H4("💬 Rapprochements detected", className="text-info fw-bold mt-4"),
                     dbc.Card(
                         dbc.CardBody([
                             dash_table.DataTable(
@@ -672,7 +672,7 @@ def register_callbacks(app):
             fusion_df = pd.read_json(fusion_json, orient="split")
             results.append(
                 html.Div([
-                    html.H4("🔗 Fusions détectées", className="text-success fw-bold mt-4"),
+                    html.H4("🔗 Mergers detected", className="text-success fw-bold mt-4"),
                     dbc.Card(
                         dbc.CardBody([
                             dash_table.DataTable(
@@ -694,7 +694,7 @@ def register_callbacks(app):
             rupture_df = pd.read_json(rupture_json, orient="split")
             results.append(
                 html.Div([
-                    html.H4("💔 Ruptures détectées", className="text-danger fw-bold mt-4"),
+                    html.H4("💔 Breakages detected", className="text-danger fw-bold mt-4"),
                     dbc.Card(
                         dbc.CardBody([
                             dash_table.DataTable(
@@ -716,7 +716,7 @@ def register_callbacks(app):
             couples_df = pd.read_json(couples_json, orient="split")
             results.append(
                 html.Div([
-                    html.H4("💑 Couples fusion ➜ rupture", className="text-warning fw-bold mt-4"),
+                    html.H4("💑 merger ➜ breakup", className="text-warning fw-bold mt-4"),
                     dbc.Card(
                         dbc.CardBody([
                             dash_table.DataTable(
@@ -738,7 +738,7 @@ def register_callbacks(app):
             rf_df = pd.read_json(rupture_fusion_json, orient="split")
             results.append(
                 html.Div([
-                    html.H4("♻️ Couples rupture ➜ fusion", className="text-secondary fw-bold mt-4"),
+                    html.H4("♻️ breakup ➜ merger", className="text-secondary fw-bold mt-4"),
                     dbc.Card(
                         dbc.CardBody([
                             dash_table.DataTable(
@@ -757,7 +757,7 @@ def register_callbacks(app):
             )
 
         if not results:
-            return html.Div("Aucun résultat à afficher."), ""
+            return html.Div("No results to display."), ""
 
         return html.Div(results), html.Div(status_messages)
 
