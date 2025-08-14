@@ -11,7 +11,7 @@ layout = dbc.Container([
     dbc.Row([
         # Colonne de gauche : tous les contrôles
         dbc.Col([
-            html.Img(src="/doc/img/moustic.png", style={'height': '80px'}, className="my-3"),
+            html.Img(src="/assets/moustic.png", style={'height': '80px'}, className="my-3"),
 
             html.H3("Upload a CSV file", className="mt-4 text-secondary"),
             dcc.Upload(
@@ -219,8 +219,8 @@ layout = dbc.Container([
         style={"width": "300px"},
         children=[
             dbc.ButtonGroup([
-                dbc.Button("Tout cocher", id="select-all", color="success", size="sm"),
-                dbc.Button("Tout décocher", id="deselect-all", color="danger", size="sm"),
+                dbc.Button("Check all", id="select-all", color="success", size="sm"),
+                dbc.Button("Uncheck all", id="deselect-all", color="danger", size="sm"),
             ], className="mb-2"),
             dbc.Checklist(
                 id="object-checklist",
