@@ -6,7 +6,7 @@ This project allows us to visualize swarms of mosquitoes, detect interactions fr
 <img src="doc/img/IRD.png" width="300" height="100" /> <img src="doc/img/MIVEGEC.png" width="150" height="100" />
 
 ---
-
+For people unfamiliar with installing IT tools, help with installing and getting started with Moustic is available.
 👉 **Access the documentation site here:** [moustic Web Page](https://anaisdenis.github.io/moustic/) 
 
 ## Exigence 
