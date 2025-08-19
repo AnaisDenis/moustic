@@ -38,6 +38,8 @@ Example (excerpt):
 | 1 	 	| 3.171		| 0.201		| -0153		| -0.103	| 0.470		|-0.044		| 0.396	 	|
 
 
+A sample file is available in the data folder at the root of the moustic folder.
+
 ## select a csv data file
 
 <img src="/moustic/img/mosquitrack/charger_fichier.png" />
