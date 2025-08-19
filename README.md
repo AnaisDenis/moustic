@@ -9,11 +9,11 @@ Although conceived for mosquito research, moustic can handle any dataset that re
 
 The moustic application includes three modules:
 
-	•	Mosqui'Track: Follow object trajectories in multiple formats, zoom in on selected paths, animate them over time, and measure distances between individuals frame by frame.
+•	Mosqui'Track: Follow object trajectories in multiple formats, zoom in on selected paths, animate them over time, and measure distances between individuals frame by frame.
  
-	•	Mosqui'Love: Identify and quantify interactions: who meets whom, when, and for how long, from approach to contact to separation.
+•	Mosqui'Love: Identify and quantify interactions: who meets whom, when, and for how long, from approach to contact to separation.
  
-	•	Mosqu'Investigate: Dive deeper with direction vectors, speed, and nearest-neighbor distances displayed in color gradients, perfect for spotting attraction, repulsion, and movement patterns.
+•	Mosqu'Investigate: Dive deeper with direction vectors, speed, and nearest-neighbor distances displayed in color gradients, perfect for spotting attraction, repulsion, and movement patterns.
 
 Every module is packed with adjustable settings, giving you the freedom to explore your data your way. Whether for quick inspection or in-depth analysis, SwarmTrack turns raw coordinates into clear, dynamic visual stories.
 
