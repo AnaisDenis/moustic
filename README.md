@@ -7,6 +7,7 @@ This project allows us to visualize swarms of mosquitoes, detect interactions fr
 
 ---
 For people unfamiliar with installing IT tools, help with installing and getting started with Moustic is available.
+
 👉 **Access the documentation site here:** [moustic Web Page](https://anaisdenis.github.io/moustic/) 
 
 ## Exigence 
