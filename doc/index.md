@@ -61,5 +61,5 @@ This project allows us to visualize swarms of mosquitoes, detect interactions fr
 For questions or suggestions, please contact:
 olivier.roux@ird.fr
 
-Project developed as part of a Master's thesis on mosquito behavior analysis.
+Project developed by Anaïs DENIS as part of a Master's thesis on mosquito behavior analysis.
 
