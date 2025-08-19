@@ -18,7 +18,7 @@ The moustic application includes three modules:
 Every module is packed with adjustable settings, giving you the freedom to explore your data your way. Whether for quick inspection or in-depth analysis, SwarmTrack turns raw coordinates into clear, dynamic visual stories.
 
 
-<img src="doc/img/IRD.png" width="300" height="100" /> <img src="doc/img/MIVEGEC.png" width="150" height="100" />
+<img src="doc/img/IRD.png" width="300" height="100" /> <img src="doc/img/MIVEGEC.png" width="150" height="100" /> <img src="doc/img/ANR.jpg" width="150" height="100" />
 
 ---
 For people unfamiliar with installing IT tools, help with installing and getting started with Moustic is available.
