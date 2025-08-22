@@ -1,35 +1,7 @@
 # Welcome to Mosqui'Track Documentation!
 <img src="/moustic/img/mosquitrack/mosquitrack.png" />
 
-## 1 – 2D and 3D Graphs
-<img src="/moustic/img/mosquitrack/graphes.png" />
-
-To view the 2D and 3D graphs, you can click on the options shown above.  
-The graphs are interactive: if you hover your mouse over them, you can zoom in and out.  
-You can also select the objects you wish to display on the graph.  
-Clicking once on an object in the legend will hide it. Clicking once again will make it reappear.  
-If you double-click on an object, all other objects will be deselected.
-
-## 2 – Trajectory Axes vs. Time Graphs
-<img src="/moustic/img/mosquitrack/xyzt.png" />
-
-By clicking on the options, you will obtain the corresponding graphs.
-
-## 3 – Graphs Showing the Distance Between Two Trajectories
-<img src="/moustic/img/mosquitrack/distance.png"/>
-
-If you select more than two objects, the graph will display each pair.  
-For better readability, it is recommended not to select too many objects.
-
-## 4 – Time Selection
-<img src="/moustic/img/mosquitrack/selection_temps.png" />
-
-You can choose to display the 2D and 3D graphs dynamically over time.  
-For example, you can select a specific time using the slider or directly type it into the time input box.  
-By clicking on *Start*, the images will scroll at the playback speed you have chosen.  
-**Note:** Large files may make this feature difficult or impossible to use.
-
-## 5 – Save a Video
+## 1 – Save a Video
 <img src="/moustic/img/mosquitrack/enregistrer_video.png" />
 
 ### A – Settings
@@ -54,12 +26,43 @@ G: A green progress bar will indicate the progress of your recording.
 Once the recording is finished, a message will confirm its success.  
 You will then find your video in the root folder of `moustic-main`.
 
+## 2 – Time Selection
+<img src="/moustic/img/mosquitrack/selection_temps.png" />
+
+You can choose to display the 2D and 3D graphs dynamically over time.  
+For example, you can select a specific time using the slider or directly type it into the time input box.  
+By clicking on *Start*, the images will scroll at the playback speed you have chosen.  
+**Note:** Large files may make this feature difficult or impossible to use.
+
+## 3 – 2D and 3D Graphs
+<img src="/moustic/img/mosquitrack/graphes.png" />
+
+To view the 2D and 3D graphs, you can click on the options shown above.  
+The graphs are interactive: if you hover your mouse over them, you can zoom in and out.  
+You can also select the objects you wish to display on the graph.  
+Clicking once on an object in the legend will hide it. Clicking once again will make it reappear.  
+If you double-click on an object, all other objects will be deselected.
+
+## 4 – Trajectory Axes vs. Time Graphs
+<img src="/moustic/img/mosquitrack/xyzt.png" />
+
+By clicking on the options, you will obtain the corresponding graphs.
+
+## 5 – Graphs Showing the Distance Between Two Trajectories
+<img src="/moustic/img/mosquitrack/distance.png"/>
+
+If you select more than two objects, the graph will display each pair.  
+For better readability, it is recommended not to select too many objects.
+
+
+
 ## Contact
 
 For questions or suggestions, please contact:  
 olivier.roux@ird.fr  
 
 Project developed as part of a Master's thesis on mosquito behavior analysis.
+
 
 
 
